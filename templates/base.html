@@ -1,0 +1,97 @@
+<!DOCTYPE html>
+<html lang="id">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>{% block title %}K-Means Voting System{% endblock %}</title>
+    <script src="https://cdn.tailwindcss.com"></script>
+    <script src="https://cdn.jsdelivr.net/npm/chart.js"></script>
+    <link href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.0.0/css/all.min.css" rel="stylesheet">
+</head>
+<body class="bg-gray-100">
+    {% if session.admin_logged_in %}
+    <!-- Navigation -->
+    <nav class="bg-blue-600 text-white shadow-lg">
+        <div class="max-w-7xl mx-auto px-4">
+            <div class="flex justify-between items-center py-4">
+                <div class="flex items-center space-x-4">
+                    <h1 class="text-xl font-bold">K-Means Voting System</h1>
+                </div>
+                <div class="flex items-center space-x-6">
+                    <a href="{{ url_for('dashboard') }}" class="hover:text-blue-200 transition-colors">
+                        <i class="fas fa-tachometer-alt mr-2"></i>Dashboard
+                    </a>
+                    <a href="{{ url_for('anggota') }}" class="hover:text-blue-200 transition-colors">
+                        <i class="fas fa-users mr-2"></i>Data Anggota
+                    </a>
+                    <a href="{{ url_for('analisis') }}" class="hover:text-blue-200 transition-colors">
+                        <i class="fas fa-chart-line mr-2"></i>Analisis K-Means
+                    </a>
+                    <a href="{{ url_for('voting_page') }}" class="hover:text-blue-200 transition-colors">
+                        <i class="fas fa-vote-yea mr-2"></i>Voting
+                    </a>
+                    <a href="{{ url_for('hasil') }}" class="hover:text-blue-200 transition-colors">
+                        <i class="fas fa-trophy mr-2"></i>Hasil
+                    </a>
+                    <div class="border-l border-blue-400 pl-6">
+                        <span class="mr-4">Admin: {{ session.admin_username }}</span>
+                        <a href="{{ url_for('logout') }}" class="bg-red-500 hover:bg-red-600 px-3 py-1 rounded transition-colors">
+                            <i class="fas fa-sign-out-alt mr-1"></i>Logout
+                        </a>
+                    </div>
+                </div>
+            </div>
+        </div>
+    </nav>
+    {% endif %}
+
+    <!-- Flash Messages -->
+    {% with messages = get_flashed_messages(with_categories=true) %}
+        {% if messages %}
+            <div class="max-w-7xl mx-auto px-4 mt-4">
+                {% for category, message in messages %}
+                    <div class="alert alert-{{ category }} mb-4 p-4 rounded-lg {% if category == 'error' %}bg-red-100 border border-red-400 text-red-700{% elif category == 'success' %}bg-green-100 border border-green-400 text-green-700{% else %}bg-blue-100 border border-blue-400 text-blue-700{% endif %}">
+                        <div class="flex items-center">
+                            {% if category == 'error' %}
+                                <i class="fas fa-exclamation-circle mr-2"></i>
+                            {% elif category == 'success' %}
+                                <i class="fas fa-check-circle mr-2"></i>
+                            {% else %}
+                                <i class="fas fa-info-circle mr-2"></i>
+                            {% endif %}
+                            {{ message }}
+                        </div>
+                    </div>
+                {% endfor %}
+            </div>
+        {% endif %}
+    {% endwith %}
+
+    <!-- Main Content -->
+    <main class="max-w-7xl mx-auto px-4 py-6">
+        {% block content %}{% endblock %}
+    </main>
+
+    <!-- Footer -->
+    <footer class="bg-gray-800 text-white text-center py-4 mt-12">
+        <p>&copy; 2024 K-Means Voting System - Sistem Pemilihan Ketua Karang Taruna</p>
+    </footer>
+
+    <!-- Scripts -->
+    <script>
+        // Auto hide alerts after 5 seconds
+        setTimeout(function() {
+            const alerts = document.querySelectorAll('.alert');
+            alerts.forEach(function(alert) {
+                alert.style.transition = 'opacity 0.5s';
+                alert.style.opacity = '0';
+                setTimeout(function() {
+                    alert.remove();
+                }, 500);
+            });
+        }, 5000);
+    </script>
+    
+    {% block scripts %}{% endblock %}
+</body>
+</html>

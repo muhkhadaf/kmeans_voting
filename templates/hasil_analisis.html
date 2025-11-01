@@ -1,0 +1,273 @@
+{% extends "base.html" %}
+
+{% block title %}Hasil Analisis K-Means - K-Means Voting System{% endblock %}
+
+{% block content %}
+<div class="mb-8">
+    <div class="flex justify-between items-center">
+        <div>
+            <h1 class="text-3xl font-bold text-gray-800 mb-2">Hasil Analisis K-Means</h1>
+            <p class="text-gray-600">Hasil clustering anggota berdasarkan kriteria penilaian</p>
+        </div>
+        <div class="flex space-x-3">
+            <a href="{{ url_for('analisis') }}" 
+               class="bg-gray-600 hover:bg-gray-700 text-white px-4 py-2 rounded-lg transition-colors flex items-center">
+                <i class="fas fa-arrow-left mr-2"></i>
+                Kembali ke Analisis
+            </a>
+        </div>
+    </div>
+</div>
+
+{% if cluster_stats %}
+<!-- Cluster Summary -->
+<div class="grid grid-cols-1 md:grid-cols-3 gap-6 mb-8">
+    {% for cluster in cluster_stats %}
+    <div class="bg-white rounded-lg shadow-md p-6 border-l-4 
+                {% if cluster.label == 'Sangat Layak' %}border-green-500{% elif cluster.label == 'Cukup Layak' %}border-yellow-500{% else %}border-red-500{% endif %}">
+        <div class="flex items-center justify-between mb-4">
+            <h3 class="text-lg font-semibold 
+                       {% if cluster.label == 'Sangat Layak' %}text-green-700{% elif cluster.label == 'Cukup Layak' %}text-yellow-700{% else %}text-red-700{% endif %}">
+                {{ cluster.label }}
+            </h3>
+            <span class="text-2xl font-bold 
+                         {% if cluster.label == 'Sangat Layak' %}text-green-600{% elif cluster.label == 'Cukup Layak' %}text-yellow-600{% else %}text-red-600{% endif %}">
+                {{ cluster.count }}
+            </span>
+        </div>
+        <div class="text-sm text-gray-600">
+            <p>Rata-rata Skor: <span class="font-semibold">{{ cluster.avg_score }}</span></p>
+            <p>Cluster ID: {{ cluster.cluster_id }}</p>
+        </div>
+    </div>
+    {% endfor %}
+</div>
+
+<!-- Cluster Details -->
+{% for cluster in cluster_stats %}
+<div class="bg-white rounded-lg shadow-md overflow-hidden mb-8">
+    <div class="px-6 py-4 border-l-4 
+                {% if cluster.label == 'Sangat Layak' %}bg-green-50 border-green-500{% elif cluster.label == 'Cukup Layak' %}bg-yellow-50 border-yellow-500{% else %}bg-red-50 border-red-500{% endif %}">
+        <div class="flex justify-between items-center">
+            <h3 class="text-xl font-semibold 
+                       {% if cluster.label == 'Sangat Layak' %}text-green-800{% elif cluster.label == 'Cukup Layak' %}text-yellow-800{% else %}text-red-800{% endif %}">
+                <i class="fas fa-layer-group mr-2"></i>
+                {{ cluster.label }} ({{ cluster.count }} orang)
+            </h3>
+            <div class="text-sm 
+                        {% if cluster.label == 'Sangat Layak' %}text-green-700{% elif cluster.label == 'Cukup Layak' %}text-yellow-700{% else %}text-red-700{% endif %}">
+                Rata-rata: {{ cluster.avg_score }}
+            </div>
+        </div>
+    </div>
+    
+    <div class="overflow-x-auto">
+        <table class="min-w-full divide-y divide-gray-200">
+            <thead class="bg-gray-50">
+                <tr>
+                    <th class="px-6 py-3 text-left text-xs font-medium text-gray-500 uppercase tracking-wider">
+                        <input type="checkbox" id="selectAll{{ cluster.cluster_id }}" 
+                               onchange="toggleAll({{ cluster.cluster_id }})" class="rounded">
+                    </th>
+                    <th class="px-6 py-3 text-left text-xs font-medium text-gray-500 uppercase tracking-wider">Nama</th>
+                    <th class="px-6 py-3 text-left text-xs font-medium text-gray-500 uppercase tracking-wider">Keaktifan</th>
+                    <th class="px-6 py-3 text-left text-xs font-medium text-gray-500 uppercase tracking-wider">Kepemimpinan</th>
+                    <th class="px-6 py-3 text-left text-xs font-medium text-gray-500 uppercase tracking-wider">Pengalaman</th>
+                    <th class="px-6 py-3 text-left text-xs font-medium text-gray-500 uppercase tracking-wider">Disiplin</th>
+                    <th class="px-6 py-3 text-left text-xs font-medium text-gray-500 uppercase tracking-wider">Pendidikan</th>
+                    <th class="px-6 py-3 text-left text-xs font-medium text-gray-500 uppercase tracking-wider">Usia</th>
+                    <th class="px-6 py-3 text-left text-xs font-medium text-gray-500 uppercase tracking-wider">Skor Total</th>
+                </tr>
+            </thead>
+            <tbody class="bg-white divide-y divide-gray-200">
+                {% for member in cluster.members %}
+                <tr class="hover:bg-gray-50">
+                    <td class="px-6 py-4 whitespace-nowrap">
+                        <input type="checkbox" name="member_{{ cluster.cluster_id }}" value="{{ member[0] }}" 
+                               class="rounded member-checkbox" data-cluster="{{ cluster.cluster_id }}">
+                    </td>
+                    <td class="px-6 py-4 whitespace-nowrap">
+                        <div class="text-sm font-medium text-gray-900">{{ member[1] }}</div>
+                    </td>
+                    <td class="px-6 py-4 whitespace-nowrap text-sm text-gray-500">{{ member[2] }}</td>
+                    <td class="px-6 py-4 whitespace-nowrap text-sm text-gray-500">{{ member[3] }}</td>
+                    <td class="px-6 py-4 whitespace-nowrap text-sm text-gray-500">{{ member[4] }}</td>
+                    <td class="px-6 py-4 whitespace-nowrap text-sm text-gray-500">{{ member[5] }}</td>
+                    <td class="px-6 py-4 whitespace-nowrap text-sm text-gray-500">{{ member[6] }}</td>
+                    <td class="px-6 py-4 whitespace-nowrap text-sm text-gray-500">{{ member[7] }} tahun</td>
+                    <td class="px-6 py-4 whitespace-nowrap text-sm font-medium text-gray-900">
+                        {{ "%.1f"|format((member[2] + member[3] + member[4] + member[5] + member[6] + member[7]) / 6) }}
+                    </td>
+                </tr>
+                {% endfor %}
+            </tbody>
+        </table>
+    </div>
+</div>
+{% endfor %}
+
+<!-- Set Candidates Form -->
+<div class="bg-white rounded-lg shadow-md p-6">
+    <h3 class="text-xl font-semibold text-gray-800 mb-4">
+        <i class="fas fa-user-tie mr-2"></i>
+        Tetapkan Kandidat untuk Voting
+    </h3>
+    <p class="text-gray-600 mb-6">
+        Pilih anggota yang akan dijadikan kandidat untuk tahap voting. 
+        Disarankan memilih dari cluster "Sangat Layak" terlebih dahulu.
+    </p>
+    
+    <form method="POST" action="{{ url_for('set_kandidat') }}" id="kandidatForm">
+        <div class="flex justify-between items-center">
+            <div class="text-sm text-gray-600">
+                <span id="selectedCount">0</span> anggota dipilih sebagai kandidat
+            </div>
+            <div class="space-x-3">
+                <button type="button" onclick="clearSelection()" 
+                        class="px-4 py-2 bg-gray-300 text-gray-700 rounded-lg hover:bg-gray-400 transition-colors">
+                    <i class="fas fa-times mr-2"></i>
+                    Bersihkan Pilihan
+                </button>
+                <button type="submit" 
+                        class="px-6 py-2 bg-blue-600 text-white rounded-lg hover:bg-blue-700 transition-colors">
+                    <i class="fas fa-check mr-2"></i>
+                    Tetapkan Kandidat
+                </button>
+            </div>
+        </div>
+    </form>
+</div>
+
+<!-- Visualization Chart -->
+<div class="mt-8 bg-white rounded-lg shadow-md p-6">
+    <h3 class="text-xl font-semibold text-gray-800 mb-4">
+        <i class="fas fa-chart-pie mr-2"></i>
+        Visualisasi Hasil Clustering
+    </h3>
+    <div class="w-full h-96">
+        <canvas id="clusterChart"></canvas>
+    </div>
+</div>
+
+{% else %}
+<!-- No Results -->
+<div class="bg-white rounded-lg shadow-md p-12 text-center">
+    <i class="fas fa-chart-line text-4xl text-gray-400 mb-4"></i>
+    <h3 class="text-xl font-medium text-gray-900 mb-2">Belum Ada Hasil Analisis</h3>
+    <p class="text-gray-600 mb-6">Jalankan analisis K-Means terlebih dahulu untuk melihat hasil clustering</p>
+    <a href="{{ url_for('analisis') }}" 
+       class="inline-flex items-center bg-blue-600 hover:bg-blue-700 text-white px-6 py-3 rounded-lg transition-colors">
+        <i class="fas fa-play mr-2"></i>
+        Mulai Analisis
+    </a>
+</div>
+{% endif %}
+{% endblock %}
+
+{% block scripts %}
+<script>
+// Update selected count
+function updateSelectedCount() {
+    const checkboxes = document.querySelectorAll('.member-checkbox:checked');
+    const count = checkboxes.length;
+    document.getElementById('selectedCount').textContent = count;
+    
+    // Update form with selected members
+    const form = document.getElementById('kandidatForm');
+    // Remove existing hidden inputs
+    const existingInputs = form.querySelectorAll('input[name="selected_members"]');
+    existingInputs.forEach(input => input.remove());
+    
+    // Add new hidden inputs
+    checkboxes.forEach(checkbox => {
+        const input = document.createElement('input');
+        input.type = 'hidden';
+        input.name = 'selected_members';
+        input.value = checkbox.value;
+        form.appendChild(input);
+    });
+}
+
+// Toggle all checkboxes in a cluster
+function toggleAll(clusterId) {
+    const selectAllCheckbox = document.getElementById('selectAll' + clusterId);
+    const memberCheckboxes = document.querySelectorAll(`input[data-cluster="${clusterId}"]`);
+    
+    memberCheckboxes.forEach(checkbox => {
+        checkbox.checked = selectAllCheckbox.checked;
+    });
+    
+    updateSelectedCount();
+}
+
+// Clear all selections
+function clearSelection() {
+    const checkboxes = document.querySelectorAll('.member-checkbox, input[id^="selectAll"]');
+    checkboxes.forEach(checkbox => {
+        checkbox.checked = false;
+    });
+    updateSelectedCount();
+}
+
+// Add event listeners to all checkboxes
+document.addEventListener('DOMContentLoaded', function() {
+    const memberCheckboxes = document.querySelectorAll('.member-checkbox');
+    memberCheckboxes.forEach(checkbox => {
+        checkbox.addEventListener('change', updateSelectedCount);
+    });
+    
+    // Initialize chart
+    {% if cluster_stats %}
+    const ctx = document.getElementById('clusterChart').getContext('2d');
+    const chart = new Chart(ctx, {
+        type: 'doughnut',
+        data: {
+            labels: [
+                {% for cluster in cluster_stats %}
+                '{{ cluster.label }} ({{ cluster.count }})'{% if not loop.last %},{% endif %}
+                {% endfor %}
+            ],
+            datasets: [{
+                data: [
+                    {% for cluster in cluster_stats %}
+                    {{ cluster.count }}{% if not loop.last %},{% endif %}
+                    {% endfor %}
+                ],
+                backgroundColor: [
+                    {% for cluster in cluster_stats %}
+                    {% if cluster.label == 'Sangat Layak' %}'#10B981'{% elif cluster.label == 'Cukup Layak' %}'#F59E0B'{% else %}'#EF4444'{% endif %}{% if not loop.last %},{% endif %}
+                    {% endfor %}
+                ],
+                borderWidth: 2,
+                borderColor: '#ffffff'
+            }]
+        },
+        options: {
+            responsive: true,
+            maintainAspectRatio: false,
+            plugins: {
+                legend: {
+                    position: 'bottom',
+                    labels: {
+                        padding: 20,
+                        usePointStyle: true
+                    }
+                },
+                tooltip: {
+                    callbacks: {
+                        label: function(context) {
+                            const label = context.label || '';
+                            const value = context.parsed;
+                            const total = context.dataset.data.reduce((a, b) => a + b, 0);
+                            const percentage = ((value / total) * 100).toFixed(1);
+                            return `${label}: ${percentage}%`;
+                        }
+                    }
+                }
+            }
+        }
+    });
+    {% endif %}
+});
+</script>
+{% endblock %}

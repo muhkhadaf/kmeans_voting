@@ -1,0 +1,142 @@
+{% extends "base.html" %}
+
+{% block title %}Dashboard - K-Means Voting System{% endblock %}
+
+{% block content %}
+<div class="mb-8">
+    <h1 class="text-3xl font-bold text-gray-800 mb-2">Dashboard</h1>
+    <p class="text-gray-600">Selamat datang di Sistem Pemilihan Ketua Karang Taruna</p>
+</div>
+
+<!-- Statistics Cards -->
+<div class="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-4 gap-6 mb-8">
+    <div class="bg-white rounded-lg shadow-md p-6 border-l-4 border-blue-500">
+        <div class="flex items-center">
+            <div class="flex-1">
+                <h3 class="text-lg font-semibold text-gray-700">Total Anggota</h3>
+                <p class="text-3xl font-bold text-blue-600">{{ stats.total_anggota }}</p>
+            </div>
+            <div class="bg-blue-100 p-3 rounded-full">
+                <i class="fas fa-users text-2xl text-blue-600"></i>
+            </div>
+        </div>
+    </div>
+
+    <div class="bg-white rounded-lg shadow-md p-6 border-l-4 border-green-500">
+        <div class="flex items-center">
+            <div class="flex-1">
+                <h3 class="text-lg font-semibold text-gray-700">Kandidat</h3>
+                <p class="text-3xl font-bold text-green-600">{{ stats.total_kandidat }}</p>
+            </div>
+            <div class="bg-green-100 p-3 rounded-full">
+                <i class="fas fa-user-tie text-2xl text-green-600"></i>
+            </div>
+        </div>
+    </div>
+
+    <div class="bg-white rounded-lg shadow-md p-6 border-l-4 border-purple-500">
+        <div class="flex items-center">
+            <div class="flex-1">
+                <h3 class="text-lg font-semibold text-gray-700">Total User</h3>
+                <p class="text-3xl font-bold text-purple-600">{{ stats.total_users }}</p>
+            </div>
+            <div class="bg-purple-100 p-3 rounded-full">
+                <i class="fas fa-user-friends text-2xl text-purple-600"></i>
+            </div>
+        </div>
+    </div>
+
+    <div class="bg-white rounded-lg shadow-md p-6 border-l-4 border-orange-500">
+        <div class="flex items-center">
+            <div class="flex-1">
+                <h3 class="text-lg font-semibold text-gray-700">Total Suara</h3>
+                <p class="text-3xl font-bold text-orange-600">{{ stats.total_votes }}</p>
+            </div>
+            <div class="bg-orange-100 p-3 rounded-full">
+                <i class="fas fa-vote-yea text-2xl text-orange-600"></i>
+            </div>
+        </div>
+    </div>
+</div>
+
+<!-- Quick Actions -->
+<div class="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-6 mb-8">
+    <div class="bg-white rounded-lg shadow-md p-6">
+        <h3 class="text-xl font-semibold text-gray-800 mb-4">
+            <i class="fas fa-users text-blue-600 mr-2"></i>
+            Kelola Anggota
+        </h3>
+        <p class="text-gray-600 mb-4">Tambah, edit, atau hapus data anggota karang taruna</p>
+        <a href="{{ url_for('anggota') }}" 
+           class="inline-flex items-center bg-blue-600 hover:bg-blue-700 text-white px-4 py-2 rounded-lg transition-colors">
+            <i class="fas fa-arrow-right mr-2"></i>
+            Kelola Anggota
+        </a>
+    </div>
+
+    <div class="bg-white rounded-lg shadow-md p-6">
+        <h3 class="text-xl font-semibold text-gray-800 mb-4">
+            <i class="fas fa-chart-line text-green-600 mr-2"></i>
+            Analisis K-Means
+        </h3>
+        <p class="text-gray-600 mb-4">Jalankan algoritma K-Means untuk menentukan kandidat terbaik</p>
+        <a href="{{ url_for('analisis') }}" 
+           class="inline-flex items-center bg-green-600 hover:bg-green-700 text-white px-4 py-2 rounded-lg transition-colors">
+            <i class="fas fa-arrow-right mr-2"></i>
+            Mulai Analisis
+        </a>
+    </div>
+
+    <div class="bg-white rounded-lg shadow-md p-6">
+        <h3 class="text-xl font-semibold text-gray-800 mb-4">
+            <i class="fas fa-vote-yea text-purple-600 mr-2"></i>
+            Sistem Voting
+        </h3>
+        <p class="text-gray-600 mb-4">Kelola kandidat dan proses voting anggota</p>
+        <div class="space-y-2">
+            <a href="{{ url_for('voting_page') }}" 
+               class="inline-flex items-center bg-purple-600 hover:bg-purple-700 text-white px-4 py-2 rounded-lg transition-colors mr-2">
+                <i class="fas fa-arrow-right mr-2"></i>
+                Kelola Voting
+            </a>
+            <a href="{{ url_for('voting_periods') }}" 
+               class="inline-flex items-center bg-indigo-600 hover:bg-indigo-700 text-white px-4 py-2 rounded-lg transition-colors">
+                <i class="fas fa-clock mr-2"></i>
+                Periode Voting
+            </a>
+        </div>
+    </div>
+</div>
+
+<!-- System Information -->
+<div class="bg-white rounded-lg shadow-md p-6">
+    <h3 class="text-xl font-semibold text-gray-800 mb-4">
+        <i class="fas fa-info-circle text-blue-600 mr-2"></i>
+        Informasi Sistem
+    </h3>
+    <div class="grid grid-cols-1 md:grid-cols-2 gap-6">
+        <div>
+            <h4 class="font-semibold text-gray-700 mb-2">Alur Kerja Sistem:</h4>
+            <ol class="list-decimal list-inside text-gray-600 space-y-1">
+                <li>Tambahkan data anggota karang taruna</li>
+                <li>Jalankan analisis K-Means untuk clustering</li>
+                <li>Pilih kandidat terbaik dari hasil analisis</li>
+                <li>Buat akun user untuk voting</li>
+                <li>Lakukan proses voting</li>
+                <li>Lihat hasil dan pemenang</li>
+            </ol>
+        </div>
+        <div>
+            <h4 class="font-semibold text-gray-700 mb-2">Kriteria Penilaian:</h4>
+            <ul class="list-disc list-inside text-gray-600 space-y-1">
+                <li>Keaktifan (1-100)</li>
+                <li>Kepemimpinan (1-100)</li>
+                <li>Pengalaman (1-100)</li>
+                <li>Disiplin (1-100)</li>
+                <li>Pendidikan (1-100)</li>
+                <li>Usia (tahun)</li>
+            </ul>
+        </div>
+    </div>
+</div>
+{% endblock %}

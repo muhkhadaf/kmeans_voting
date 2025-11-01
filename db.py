@@ -1,0 +1,173 @@
+import MySQLdb
+from flask import g
+import os
+
+# Database configuration
+DB_CONFIG = {
+    'host': 'localhost',
+    'user': 'root',
+    'password': '',  # Sesuaikan dengan password MySQL Anda
+    'database': 'kmeans_voting'
+}
+
+def get_db():
+    """Get database connection"""
+    if 'db' not in g:
+        g.db = MySQLdb.connect(
+            host=DB_CONFIG['host'],
+            user=DB_CONFIG['user'],
+            passwd=DB_CONFIG['password'],
+            db=DB_CONFIG['database'],
+            charset='utf8'
+        )
+    return g.db
+
+def close_db(e=None):
+    """Close database connection"""
+    db = g.pop('db', None)
+    if db is not None:
+        db.close()
+
+def init_db():
+    """Initialize database with tables"""
+    try:
+        # Connect without database first to create it
+        conn = MySQLdb.connect(
+            host=DB_CONFIG['host'],
+            user=DB_CONFIG['user'],
+            passwd=DB_CONFIG['password'],
+            charset='utf8'
+        )
+        cursor = conn.cursor()
+        
+        # Create database if not exists
+        cursor.execute(f"CREATE DATABASE IF NOT EXISTS {DB_CONFIG['database']}")
+        cursor.execute(f"USE {DB_CONFIG['database']}")
+        
+        # Create admin table
+        cursor.execute("""
+            CREATE TABLE IF NOT EXISTS admin (
+                id INT AUTO_INCREMENT PRIMARY KEY,
+                username VARCHAR(50) UNIQUE NOT NULL,
+                password VARCHAR(255) NOT NULL
+            )
+        """)
+        
+        # Create anggota table
+        cursor.execute("""
+            CREATE TABLE IF NOT EXISTS anggota (
+                id INT AUTO_INCREMENT PRIMARY KEY,
+                nama VARCHAR(100) NOT NULL,
+                keaktifan INT NOT NULL,
+                kepemimpinan INT NOT NULL,
+                pengalaman INT NOT NULL,
+                disiplin INT NOT NULL,
+                pendidikan INT NOT NULL,
+                usia INT NOT NULL,
+                cluster INT DEFAULT NULL,
+                status ENUM('anggota','kandidat') DEFAULT 'anggota'
+            )
+        """)
+        
+        # Create user table
+        cursor.execute("""
+            CREATE TABLE IF NOT EXISTS user (
+                id INT AUTO_INCREMENT PRIMARY KEY,
+                nama VARCHAR(100) NOT NULL,
+                username VARCHAR(50) UNIQUE NOT NULL,
+                password VARCHAR(255) NOT NULL,
+                has_voted TINYINT DEFAULT 0
+            )
+        """)
+        
+        # Add has_voted column if it doesn't exist (for existing databases)
+        try:
+            cursor.execute("ALTER TABLE user ADD COLUMN has_voted TINYINT DEFAULT 0")
+        except MySQLdb.Error:
+            pass  # Column already exists
+        
+        # Create voting_periods table
+        cursor.execute("""
+            CREATE TABLE IF NOT EXISTS voting_periods (
+                id INT AUTO_INCREMENT PRIMARY KEY,
+                title VARCHAR(255) NOT NULL,
+                description TEXT,
+                start_time DATETIME NOT NULL,
+                end_time DATETIME NOT NULL,
+                status ENUM('scheduled','active','ended') DEFAULT 'scheduled',
+                created_at TIMESTAMP DEFAULT CURRENT_TIMESTAMP,
+                created_by VARCHAR(100) NOT NULL,
+                manually_stopped TINYINT DEFAULT 0,
+                stopped_at DATETIME,
+                extended_count INT DEFAULT 0
+            )
+        """)
+        
+        # Create voting table with period reference
+        cursor.execute("""
+            CREATE TABLE IF NOT EXISTS voting (
+                id INT AUTO_INCREMENT PRIMARY KEY,
+                user_id INT NOT NULL,
+                kandidat_id INT NOT NULL,
+                voting_period_id INT,
+                created_at TIMESTAMP DEFAULT CURRENT_TIMESTAMP,
+                FOREIGN KEY (user_id) REFERENCES user(id) ON DELETE CASCADE,
+                FOREIGN KEY (kandidat_id) REFERENCES anggota(id) ON DELETE CASCADE,
+                FOREIGN KEY (voting_period_id) REFERENCES voting_periods(id) ON DELETE CASCADE,
+                UNIQUE KEY unique_vote (user_id, kandidat_id)
+            )
+        """)
+        
+        # Add voting_period_id column if it doesn't exist (for existing databases)
+        try:
+            cursor.execute("ALTER TABLE voting ADD COLUMN voting_period_id INT")
+            cursor.execute("ALTER TABLE voting ADD FOREIGN KEY (voting_period_id) REFERENCES voting_periods(id) ON DELETE CASCADE")
+        except MySQLdb.Error:
+            pass  # Column already exists
+        
+        # Insert default admin if not exists
+        cursor.execute("SELECT COUNT(*) FROM admin WHERE username = 'admin'")
+        if cursor.fetchone()[0] == 0:
+            from werkzeug.security import generate_password_hash
+            hashed_password = generate_password_hash('admin123')
+            cursor.execute(
+                "INSERT INTO admin (username, password) VALUES (%s, %s)",
+                ('admin', hashed_password)
+            )
+        
+        conn.commit()
+        cursor.close()
+        conn.close()
+        print("Database initialized successfully!")
+        return True
+        
+    except Exception as e:
+        print(f"Error initializing database: {e}")
+        return False
+
+def execute_query(query, params=None, fetch=False):
+    """Execute database query"""
+    try:
+        db = get_db()
+        cursor = db.cursor()
+        
+        if params:
+            cursor.execute(query, params)
+        else:
+            cursor.execute(query)
+            
+        if fetch:
+            if fetch == 'one':
+                result = cursor.fetchone()
+            else:
+                result = cursor.fetchall()
+        else:
+            result = cursor.rowcount
+            
+        db.commit()
+        cursor.close()
+        return result
+        
+    except Exception as e:
+        print(f"Database error: {e}")
+        return None
