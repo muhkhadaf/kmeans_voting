@@ -222,17 +222,13 @@ def add_anggota():
         return redirect(url_for('login'))
     
     nama = request.form['nama']
-    keaktifan = int(request.form['keaktifan'])
-    kepemimpinan = int(request.form['kepemimpinan'])
-    pengalaman = int(request.form['pengalaman'])
-    disiplin = int(request.form['disiplin'])
-    pendidikan = int(request.form['pendidikan'])
-    usia = int(request.form['usia'])
+    pendidikan = request.form['pendidikan']
+    visi_misi = request.form['visi_misi']
     
     execute_query(
-        """INSERT INTO anggota (nama, keaktifan, kepemimpinan, pengalaman, disiplin, pendidikan, usia) 
-           VALUES (%s, %s, %s, %s, %s, %s, %s)""",
-        (nama, keaktifan, kepemimpinan, pengalaman, disiplin, pendidikan, usia)
+        """INSERT INTO anggota (nama, pendidikan, visi_misi) 
+           VALUES (%s, %s, %s)""",
+        (nama, pendidikan, visi_misi)
     )
     
     flash('Anggota berhasil ditambahkan!', 'success')
@@ -244,17 +240,12 @@ def edit_anggota(id):
         return redirect(url_for('login'))
     
     nama = request.form['nama']
-    keaktifan = int(request.form['keaktifan'])
-    kepemimpinan = int(request.form['kepemimpinan'])
-    pengalaman = int(request.form['pengalaman'])
-    disiplin = int(request.form['disiplin'])
-    pendidikan = int(request.form['pendidikan'])
-    usia = int(request.form['usia'])
+    pendidikan = request.form['pendidikan']
+    visi_misi = request.form['visi_misi']
     
     execute_query(
-        """UPDATE anggota SET nama=%s, keaktifan=%s, kepemimpinan=%s, pengalaman=%s, 
-           disiplin=%s, pendidikan=%s, usia=%s WHERE id=%s""",
-        (nama, keaktifan, kepemimpinan, pengalaman, disiplin, pendidikan, usia, id)
+        """UPDATE anggota SET nama=%s, pendidikan=%s, visi_misi=%s WHERE id=%s""",
+        (nama, pendidikan, visi_misi, id)
     )
     
     flash('Data anggota berhasil diupdate!', 'success')
@@ -274,7 +265,19 @@ def analisis():
     if 'admin_logged_in' not in session:
         return redirect(url_for('login'))
     
-    members = execute_query("SELECT * FROM anggota ORDER BY nama", fetch=True)
+    # Get members with rating count
+    members = execute_query("""
+        SELECT 
+            a.id,
+            a.nama,
+            a.pendidikan,
+            a.visi_misi,
+            COUNT(p.id) as rating_count
+        FROM anggota a
+        LEFT JOIN penilaian p ON a.id = p.anggota_id
+        GROUP BY a.id, a.nama, a.pendidikan, a.visi_misi
+        ORDER BY a.nama
+    """, fetch=True)
     return render_template('analisis.html', members=members)
 
 @app.route('/run_kmeans', methods=['POST'])
@@ -282,20 +285,34 @@ def run_kmeans():
     if 'admin_logged_in' not in session:
         return redirect(url_for('login'))
     
-    # Get all members data
-    members = execute_query("SELECT * FROM anggota", fetch=True)
+    # Get average ratings for each member from user assessments
+    members_ratings = execute_query("""
+        SELECT 
+            a.id,
+            a.nama,
+            AVG(p.keaktifan) as avg_keaktifan,
+            AVG(p.kepemimpinan) as avg_kepemimpinan,
+            AVG(p.pengalaman) as avg_pengalaman,
+            AVG(p.disiplin) as avg_disiplin,
+            AVG(p.komunikasi) as avg_komunikasi,
+            COUNT(p.id) as rating_count
+        FROM anggota a
+        LEFT JOIN penilaian p ON a.id = p.anggota_id
+        GROUP BY a.id, a.nama
+        HAVING rating_count > 0
+    """, fetch=True)
     
-    if len(members) < 3:
-        flash('Minimal 3 anggota diperlukan untuk analisis K-Means!', 'error')
+    if not members_ratings or len(members_ratings) < 3:
+        flash('Minimal 3 anggota dengan penilaian diperlukan untuk analisis K-Means!', 'error')
         return redirect(url_for('analisis'))
     
     # Prepare data for clustering
     data = []
     member_ids = []
     
-    for member in members:
-        # member = (id, nama, keaktifan, kepemimpinan, pengalaman, disiplin, pendidikan, usia, cluster, status)
-        features = [member[2], member[3], member[4], member[5], member[6], member[7]]  # All criteria
+    for member in members_ratings:
+        # member = (id, nama, avg_keaktifan, avg_kepemimpinan, avg_pengalaman, avg_disiplin, avg_komunikasi, rating_count)
+        features = [member[2], member[3], member[4], member[5], member[6]]  # All average criteria
         data.append(features)
         member_ids.append(member[0])
     
@@ -326,16 +343,30 @@ def hasil_analisis():
     if 'admin_logged_in' not in session:
         return redirect(url_for('login'))
     
-    # Get members with cluster assignments
-    members = execute_query(
-        "SELECT * FROM anggota WHERE cluster IS NOT NULL ORDER BY cluster, nama", 
-        fetch=True
-    )
+    # Get members with cluster assignments and their average ratings
+    members_data = execute_query("""
+        SELECT 
+            a.id,
+            a.nama,
+            a.pendidikan,
+            a.cluster,
+            AVG(p.keaktifan) as avg_keaktifan,
+            AVG(p.kepemimpinan) as avg_kepemimpinan,
+            AVG(p.pengalaman) as avg_pengalaman,
+            AVG(p.disiplin) as avg_disiplin,
+            AVG(p.komunikasi) as avg_komunikasi,
+            COUNT(p.id) as rating_count
+        FROM anggota a
+        LEFT JOIN penilaian p ON a.id = p.anggota_id
+        WHERE a.cluster IS NOT NULL
+        GROUP BY a.id, a.nama, a.pendidikan, a.cluster
+        ORDER BY a.cluster, a.nama
+    """, fetch=True)
     
     # Group by cluster
     clusters = {}
-    for member in members:
-        cluster = member[8]  # cluster column
+    for member in members_data:
+        cluster = member[3]  # cluster column
         if cluster not in clusters:
             clusters[cluster] = []
         clusters[cluster].append(member)
@@ -350,9 +381,10 @@ def hasil_analisis():
         count = len(members_in_cluster)
         
         for member in members_in_cluster:
-            # Calculate average score for each member
-            score = (member[2] + member[3] + member[4] + member[5] + member[6] + member[7]) / 6
-            total_score += score
+            # Calculate average score for each member (avg of 5 criteria)
+            if member[4] is not None:  # Check if ratings exist
+                score = (member[4] + member[5] + member[6] + member[7] + member[8]) / 5
+                total_score += score
         
         avg_score = total_score / count if count > 0 else 0
         
@@ -641,6 +673,23 @@ def add_user():
     
     return redirect(url_for('voting_page'))
 
+@app.route('/user/delete/<int:id>')
+def delete_user(id):
+    if 'admin_logged_in' not in session:
+        return redirect(url_for('login'))
+    
+    # Get user info before deleting
+    user = execute_query("SELECT nama FROM user WHERE id = %s", (id,), fetch='one')
+    
+    if user:
+        # Delete user (cascade will delete related penilaian and voting)
+        execute_query("DELETE FROM user WHERE id = %s", (id,))
+        flash(f'User "{user[0]}" berhasil dihapus!', 'success')
+    else:
+        flash('User tidak ditemukan!', 'error')
+    
+    return redirect(url_for('voting_page'))
+
 @app.route('/user_login', methods=['GET', 'POST'])
 def user_login():
     if request.method == 'POST':
@@ -657,11 +706,66 @@ def user_login():
             session['user_logged_in'] = True
             session['user_id'] = user[0]
             session['user_name'] = user[1]
-            return redirect(url_for('user_vote'))
+            return redirect(url_for('user_penilaian'))
         else:
             flash('Username atau password salah!', 'error')
     
     return render_template('user_login.html')
+
+@app.route('/user_penilaian')
+def user_penilaian():
+    if 'user_logged_in' not in session:
+        return redirect(url_for('user_login'))
+    
+    # Get all members
+    members = execute_query("SELECT * FROM anggota ORDER BY nama", fetch=True)
+    
+    # Get user's existing ratings
+    user_ratings = execute_query("""
+        SELECT anggota_id FROM penilaian WHERE user_id = %s
+    """, (session['user_id'],), fetch=True)
+    
+    rated_member_ids = [r[0] for r in user_ratings] if user_ratings else []
+    
+    return render_template('user_penilaian.html', members=members, rated_member_ids=rated_member_ids)
+
+@app.route('/submit_penilaian', methods=['POST'])
+def submit_penilaian():
+    if 'user_logged_in' not in session:
+        return redirect(url_for('user_login'))
+    
+    anggota_id = int(request.form['anggota_id'])
+    keaktifan = int(request.form['keaktifan'])
+    kepemimpinan = int(request.form['kepemimpinan'])
+    pengalaman = int(request.form['pengalaman'])
+    disiplin = int(request.form['disiplin'])
+    komunikasi = int(request.form['komunikasi'])
+    user_id = session['user_id']
+    
+    # Check if user already rated this member
+    existing = execute_query(
+        "SELECT * FROM penilaian WHERE user_id = %s AND anggota_id = %s",
+        (user_id, anggota_id),
+        fetch='one'
+    )
+    
+    if existing:
+        # Update existing rating
+        execute_query("""
+            UPDATE penilaian 
+            SET keaktifan=%s, kepemimpinan=%s, pengalaman=%s, disiplin=%s, komunikasi=%s
+            WHERE user_id=%s AND anggota_id=%s
+        """, (keaktifan, kepemimpinan, pengalaman, disiplin, komunikasi, user_id, anggota_id))
+        flash('Penilaian berhasil diupdate!', 'success')
+    else:
+        # Insert new rating
+        execute_query("""
+            INSERT INTO penilaian (user_id, anggota_id, keaktifan, kepemimpinan, pengalaman, disiplin, komunikasi)
+            VALUES (%s, %s, %s, %s, %s, %s, %s)
+        """, (user_id, anggota_id, keaktifan, kepemimpinan, pengalaman, disiplin, komunikasi))
+        flash('Penilaian berhasil disimpan!', 'success')
+    
+    return redirect(url_for('user_penilaian'))
 
 @app.route('/user_vote')
 def user_vote():
@@ -693,11 +797,25 @@ def user_vote():
         flash('Anda sudah melakukan voting pada periode ini!', 'info')
         return redirect(url_for('vote_success'))
     
-    # Get candidates
-    candidates = execute_query(
-        "SELECT * FROM anggota WHERE status = 'kandidat' ORDER BY nama",
-        fetch=True
-    )
+    # Get candidates with their average ratings
+    candidates = execute_query("""
+        SELECT 
+            a.id,
+            a.nama,
+            a.pendidikan,
+            a.visi_misi,
+            AVG(p.keaktifan) as avg_keaktifan,
+            AVG(p.kepemimpinan) as avg_kepemimpinan,
+            AVG(p.pengalaman) as avg_pengalaman,
+            AVG(p.disiplin) as avg_disiplin,
+            AVG(p.komunikasi) as avg_komunikasi,
+            COUNT(p.id) as rating_count
+        FROM anggota a
+        LEFT JOIN penilaian p ON a.id = p.anggota_id
+        WHERE a.status = 'kandidat'
+        GROUP BY a.id, a.nama, a.pendidikan, a.visi_misi
+        ORDER BY a.nama
+    """, fetch=True)
     
     # Get period status for countdown
     period_status = get_voting_period_status()
@@ -755,6 +873,53 @@ def vote_success():
         return redirect(url_for('user_login'))
     
     return render_template('vote_success.html')
+
+@app.route('/user_change_password', methods=['GET', 'POST'])
+def user_change_password():
+    if 'user_logged_in' not in session:
+        return redirect(url_for('user_login'))
+    
+    if request.method == 'POST':
+        current_password = request.form['current_password']
+        new_password = request.form['new_password']
+        confirm_password = request.form['confirm_password']
+        
+        # Get user data
+        user = execute_query(
+            "SELECT * FROM user WHERE id = %s",
+            (session['user_id'],),
+            fetch='one'
+        )
+        
+        if not user:
+            flash('User tidak ditemukan!', 'error')
+            return redirect(url_for('user_change_password'))
+        
+        # Verify current password
+        if not check_password_hash(user[3], current_password):
+            flash('Password lama salah!', 'error')
+            return redirect(url_for('user_change_password'))
+        
+        # Validate new password
+        if len(new_password) < 6:
+            flash('Password baru minimal 6 karakter!', 'error')
+            return redirect(url_for('user_change_password'))
+        
+        if new_password != confirm_password:
+            flash('Password baru dan konfirmasi tidak cocok!', 'error')
+            return redirect(url_for('user_change_password'))
+        
+        # Update password
+        hashed_password = generate_password_hash(new_password)
+        execute_query(
+            "UPDATE user SET password = %s WHERE id = %s",
+            (hashed_password, session['user_id'])
+        )
+        
+        flash('Password berhasil diubah!', 'success')
+        return redirect(url_for('user_penilaian'))
+    
+    return render_template('user_change_password.html')
 
 @app.route('/user_logout')
 def user_logout():

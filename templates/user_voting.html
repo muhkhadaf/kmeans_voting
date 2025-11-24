@@ -19,10 +19,20 @@
                     <h1 class="text-xl font-bold text-gray-900">Sistem Voting Ketua Karang Taruna</h1>
                 </div>
                 <div class="flex items-center space-x-4">
+                    <a href="{{ url_for('user_penilaian') }}" 
+                       class="text-blue-600 hover:text-blue-800 transition-colors">
+                        <i class="fas fa-star mr-1"></i>
+                        Penilaian
+                    </a>
                     <span class="text-gray-700">
                         <i class="fas fa-user mr-2"></i>
                         {{ session.user_name }}
                     </span>
+                    <a href="{{ url_for('user_change_password') }}" 
+                       class="text-gray-600 hover:text-gray-800 transition-colors">
+                        <i class="fas fa-key mr-1"></i>
+                        Ganti Password
+                    </a>
                     <a href="{{ url_for('user_logout') }}" 
                        class="text-red-600 hover:text-red-800 transition-colors">
                         <i class="fas fa-sign-out-alt mr-1"></i>
@@ -210,34 +220,50 @@
                             <!-- Candidate Details -->
                             <div class="space-y-2 mb-6">
                                 <div class="flex justify-between text-sm">
-                                    <span class="text-gray-600">Usia:</span>
-                                    <span class="font-medium">{{ candidate[7] }} tahun</span>
+                                    <span class="text-gray-600">Pendidikan:</span>
+                                    <span class="font-medium">{{ candidate[2] }}</span>
                                 </div>
+                                {% if candidate[3] %}
+                                <div class="text-sm">
+                                    <span class="text-gray-600 font-medium">Visi & Misi:</span>
+                                    <p class="text-gray-700 mt-1 text-xs">{{ candidate[3][:100] }}{% if candidate[3]|length > 100 %}...{% endif %}</p>
+                                </div>
+                                {% endif %}
+                                <hr class="my-2">
+                                <div class="text-xs text-gray-600 mb-2">Penilaian Rata-rata:</div>
+                                {% if candidate[4] %}
                                 <div class="flex justify-between text-sm">
                                     <span class="text-gray-600">Keaktifan:</span>
-                                    <span class="font-medium">{{ candidate[2] }}/10</span>
+                                    <span class="font-medium">{{ "%.1f"|format(candidate[4]) }}</span>
                                 </div>
                                 <div class="flex justify-between text-sm">
                                     <span class="text-gray-600">Kepemimpinan:</span>
-                                    <span class="font-medium">{{ candidate[3] }}/10</span>
+                                    <span class="font-medium">{{ "%.1f"|format(candidate[5]) }}</span>
                                 </div>
                                 <div class="flex justify-between text-sm">
                                     <span class="text-gray-600">Pengalaman:</span>
-                                    <span class="font-medium">{{ candidate[4] }}/10</span>
+                                    <span class="font-medium">{{ "%.1f"|format(candidate[6]) }}</span>
                                 </div>
                                 <div class="flex justify-between text-sm">
                                     <span class="text-gray-600">Disiplin:</span>
-                                    <span class="font-medium">{{ candidate[5] }}/10</span>
+                                    <span class="font-medium">{{ "%.1f"|format(candidate[7]) }}</span>
                                 </div>
                                 <div class="flex justify-between text-sm">
-                                    <span class="text-gray-600">Pendidikan:</span>
-                                    <span class="font-medium">{{ candidate[6] }}/10</span>
+                                    <span class="text-gray-600">Komunikasi:</span>
+                                    <span class="font-medium">{{ "%.1f"|format(candidate[8]) }}</span>
+                                </div>
+                                <div class="flex justify-between text-sm">
+                                    <span class="text-gray-600">Jumlah Penilai:</span>
+                                    <span class="font-medium">{{ candidate[9] }} orang</span>
                                 </div>
                                 <hr class="my-2">
                                 <div class="flex justify-between text-sm font-semibold">
                                     <span class="text-gray-700">Skor Rata-rata:</span>
-                                    <span class="text-blue-600">{{ "%.1f"|format((candidate[2] + candidate[3] + candidate[4] + candidate[5] + candidate[6] + candidate[7]) / 6) }}</span>
+                                    <span class="text-blue-600">{{ "%.1f"|format((candidate[4] + candidate[5] + candidate[6] + candidate[7] + candidate[8]) / 5) }}</span>
                                 </div>
+                                {% else %}
+                                <div class="text-sm text-gray-500 italic">Belum ada penilaian</div>
+                                {% endif %}
                             </div>
 
                             <!-- Vote Button -->

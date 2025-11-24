@@ -70,13 +70,14 @@
                                onchange="toggleAll({{ cluster.cluster_id }})" class="rounded">
                     </th>
                     <th class="px-6 py-3 text-left text-xs font-medium text-gray-500 uppercase tracking-wider">Nama</th>
+                    <th class="px-6 py-3 text-left text-xs font-medium text-gray-500 uppercase tracking-wider">Pendidikan</th>
                     <th class="px-6 py-3 text-left text-xs font-medium text-gray-500 uppercase tracking-wider">Keaktifan</th>
                     <th class="px-6 py-3 text-left text-xs font-medium text-gray-500 uppercase tracking-wider">Kepemimpinan</th>
                     <th class="px-6 py-3 text-left text-xs font-medium text-gray-500 uppercase tracking-wider">Pengalaman</th>
                     <th class="px-6 py-3 text-left text-xs font-medium text-gray-500 uppercase tracking-wider">Disiplin</th>
-                    <th class="px-6 py-3 text-left text-xs font-medium text-gray-500 uppercase tracking-wider">Pendidikan</th>
-                    <th class="px-6 py-3 text-left text-xs font-medium text-gray-500 uppercase tracking-wider">Usia</th>
-                    <th class="px-6 py-3 text-left text-xs font-medium text-gray-500 uppercase tracking-wider">Skor Total</th>
+                    <th class="px-6 py-3 text-left text-xs font-medium text-gray-500 uppercase tracking-wider">Komunikasi</th>
+                    <th class="px-6 py-3 text-left text-xs font-medium text-gray-500 uppercase tracking-wider">Jumlah Penilai</th>
+                    <th class="px-6 py-3 text-left text-xs font-medium text-gray-500 uppercase tracking-wider">Skor Rata-rata</th>
                 </tr>
             </thead>
             <tbody class="bg-white divide-y divide-gray-200">
@@ -90,13 +91,18 @@
                         <div class="text-sm font-medium text-gray-900">{{ member[1] }}</div>
                     </td>
                     <td class="px-6 py-4 whitespace-nowrap text-sm text-gray-500">{{ member[2] }}</td>
-                    <td class="px-6 py-4 whitespace-nowrap text-sm text-gray-500">{{ member[3] }}</td>
-                    <td class="px-6 py-4 whitespace-nowrap text-sm text-gray-500">{{ member[4] }}</td>
-                    <td class="px-6 py-4 whitespace-nowrap text-sm text-gray-500">{{ member[5] }}</td>
-                    <td class="px-6 py-4 whitespace-nowrap text-sm text-gray-500">{{ member[6] }}</td>
-                    <td class="px-6 py-4 whitespace-nowrap text-sm text-gray-500">{{ member[7] }} tahun</td>
+                    <td class="px-6 py-4 whitespace-nowrap text-sm text-gray-500">{{ "%.1f"|format(member[4]) if member[4] else '-' }}</td>
+                    <td class="px-6 py-4 whitespace-nowrap text-sm text-gray-500">{{ "%.1f"|format(member[5]) if member[5] else '-' }}</td>
+                    <td class="px-6 py-4 whitespace-nowrap text-sm text-gray-500">{{ "%.1f"|format(member[6]) if member[6] else '-' }}</td>
+                    <td class="px-6 py-4 whitespace-nowrap text-sm text-gray-500">{{ "%.1f"|format(member[7]) if member[7] else '-' }}</td>
+                    <td class="px-6 py-4 whitespace-nowrap text-sm text-gray-500">{{ "%.1f"|format(member[8]) if member[8] else '-' }}</td>
+                    <td class="px-6 py-4 whitespace-nowrap text-sm text-gray-500">{{ member[9] if member[9] else 0 }}</td>
                     <td class="px-6 py-4 whitespace-nowrap text-sm font-medium text-gray-900">
-                        {{ "%.1f"|format((member[2] + member[3] + member[4] + member[5] + member[6] + member[7]) / 6) }}
+                        {% if member[4] %}
+                        {{ "%.1f"|format((member[4] + member[5] + member[6] + member[7] + member[8]) / 5) }}
+                        {% else %}
+                        -
+                        {% endif %}
                     </td>
                 </tr>
                 {% endfor %}

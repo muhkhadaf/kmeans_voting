@@ -53,19 +53,34 @@ def init_db():
             )
         """)
         
-        # Create anggota table
+        # Create anggota table (simplified - only basic info)
         cursor.execute("""
             CREATE TABLE IF NOT EXISTS anggota (
                 id INT AUTO_INCREMENT PRIMARY KEY,
                 nama VARCHAR(100) NOT NULL,
-                keaktifan INT NOT NULL,
-                kepemimpinan INT NOT NULL,
-                pengalaman INT NOT NULL,
-                disiplin INT NOT NULL,
-                pendidikan INT NOT NULL,
-                usia INT NOT NULL,
+                pendidikan ENUM('SD','SMP','SMA','D3','S1','S2','S3') NOT NULL,
+                visi_misi TEXT,
                 cluster INT DEFAULT NULL,
-                status ENUM('anggota','kandidat') DEFAULT 'anggota'
+                status ENUM('anggota','kandidat') DEFAULT 'anggota',
+                created_at TIMESTAMP DEFAULT CURRENT_TIMESTAMP
+            )
+        """)
+        
+        # Create penilaian table (user ratings for members)
+        cursor.execute("""
+            CREATE TABLE IF NOT EXISTS penilaian (
+                id INT AUTO_INCREMENT PRIMARY KEY,
+                user_id INT NOT NULL,
+                anggota_id INT NOT NULL,
+                keaktifan INT NOT NULL CHECK (keaktifan BETWEEN 1 AND 100),
+                kepemimpinan INT NOT NULL CHECK (kepemimpinan BETWEEN 1 AND 100),
+                pengalaman INT NOT NULL CHECK (pengalaman BETWEEN 1 AND 100),
+                disiplin INT NOT NULL CHECK (disiplin BETWEEN 1 AND 100),
+                komunikasi INT NOT NULL CHECK (komunikasi BETWEEN 1 AND 100),
+                created_at TIMESTAMP DEFAULT CURRENT_TIMESTAMP,
+                FOREIGN KEY (user_id) REFERENCES user(id) ON DELETE CASCADE,
+                FOREIGN KEY (anggota_id) REFERENCES anggota(id) ON DELETE CASCADE,
+                UNIQUE KEY unique_rating (user_id, anggota_id)
             )
         """)
         
