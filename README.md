@@ -8,13 +8,25 @@ Aplikasi ini adalah sistem voting online yang dilengkapi dengan fitur analisis c
 
 ## 🚀 Fitur Utama
 
-- **Manajemen Periode Voting**: Membuat, memulai, dan menghentikan periode voting
-- **Sistem Login Multi-Role**: Admin dan User dengan hak akses berbeda
-- **Voting Interface**: Interface yang user-friendly untuk melakukan voting
-- **Analisis K-Means**: Clustering otomatis hasil voting berdasarkan preferensi
-- **Dashboard Analytics**: Visualisasi hasil voting dan analisis cluster
-- **Manajemen Anggota**: CRUD anggota/kandidat voting
-- **Real-time Results**: Hasil voting dan analisis yang update secara real-time
+### Untuk Admin
+- **Manajemen Anggota**: Tambah, edit, hapus data anggota dengan informasi dasar
+- **Manajemen User**: Tambah dan hapus user yang dapat memberikan penilaian dan voting
+- **Analisis K-Means**: Clustering otomatis berdasarkan rata-rata penilaian dari user
+- **Manajemen Periode Voting**: Membuat, memulai, menghentikan, dan memperpanjang periode voting
+- **Dashboard Analytics**: Visualisasi hasil voting dan analisis cluster real-time
+- **Hasil Voting**: Monitoring hasil voting per periode dengan statistik lengkap
+
+### Untuk User
+- **Penilaian Anggota**: Memberikan penilaian untuk setiap anggota berdasarkan 5 kriteria
+- **Voting Kandidat**: Memilih kandidat terbaik dari hasil clustering
+- **Ganti Password**: Mengganti password sendiri untuk keamanan akun
+- **Riwayat Aktivitas**: Melihat status penilaian dan voting yang telah dilakukan
+
+### Fitur Keamanan
+- **Password Hashing**: Semua password di-hash menggunakan Werkzeug Security
+- **Session Management**: Session timeout dan secure session handling
+- **Role-based Access**: Pemisahan akses admin dan user
+- **Cascade Delete**: Penghapusan data terkait secara otomatis untuk integritas database
 
 ## 🛠️ Teknologi yang Digunakan
 
@@ -230,14 +242,52 @@ Project ini menggunakan MIT License. Lihat file `LICENSE` untuk detail lengkap.
 
 - **Muhammad Khadafi** - [muhkhadaf](https://github.com/muhkhadaf)
 
+## 📚 Dokumentasi Lengkap
+
+Untuk informasi lebih detail, silakan baca dokumentasi berikut:
+
+- **[QUICKSTART.md](QUICKSTART.md)** - Panduan cepat memulai dalam 5 menit
+- **[INSTALLATION.md](INSTALLATION.md)** - Panduan instalasi lengkap step-by-step
+- **[USER_GUIDE.md](USER_GUIDE.md)** - Panduan penggunaan untuk admin dan user
+- **[TROUBLESHOOTING.md](TROUBLESHOOTING.md)** - Solusi masalah umum dan debugging
+- **[CHANGELOG.md](CHANGELOG.md)** - Riwayat perubahan dan update
+- **[TEST_FEATURES.md](TEST_FEATURES.md)** - Panduan testing fitur-fitur baru
+- **[RELEASE_NOTES_v2.1.0.md](RELEASE_NOTES_v2.1.0.md)** - Release notes versi terbaru
+
+## 🆕 What's New in v2.1.0
+
+### Fitur Baru
+- ✨ **Ganti Password untuk User** - User dapat mengganti password sendiri
+- ✨ **Hapus User untuk Admin** - Admin dapat menghapus user yang tidak aktif
+- 🔒 **Enhanced Security** - Password validation dan safe deletion
+
+### Bug Fixes
+- 🐛 Fixed K-Means normalization error (division by zero)
+- 🐛 Fixed database foreign key constraint issues
+- 🐛 Fixed PyMySQL compatibility for Windows
+
+[Lihat changelog lengkap](CHANGELOG.md)
+
 ## 📞 Support
 
 Jika mengalami masalah atau memiliki pertanyaan:
 
-1. Buka issue di GitHub repository
-2. Periksa dokumentasi troubleshooting di atas
-3. Pastikan semua dependencies sudah terinstall dengan benar
+1. **Baca Dokumentasi**: Cek [TROUBLESHOOTING.md](TROUBLESHOOTING.md) untuk solusi masalah umum
+2. **Quick Start**: Ikuti [QUICKSTART.md](QUICKSTART.md) untuk setup cepat
+3. **User Guide**: Baca [USER_GUIDE.md](USER_GUIDE.md) untuk panduan lengkap
+4. **GitHub Issues**: Buka issue di GitHub repository
+5. **Contact Admin**: Hubungi administrator sistem
+
+## 🎯 Quick Links
+
+- 📖 [Dokumentasi Lengkap](USER_GUIDE.md)
+- 🚀 [Quick Start Guide](QUICKSTART.md)
+- 🔧 [Troubleshooting](TROUBLESHOOTING.md)
+- 📝 [Changelog](CHANGELOG.md)
+- 🧪 [Testing Guide](TEST_FEATURES.md)
 
 ---
 
+**Version:** 2.1.0  
+**Last Updated:** 24 November 2024  
 **Happy Voting! 🗳️**

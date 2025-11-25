@@ -945,14 +945,20 @@ def hasil():
     
     # Build query based on period filter
     if period_id:
-        # Get results for specific period
+        # Get results for specific period with average ratings
         results = execute_query("""
             SELECT a.id, a.nama, COUNT(v.id) as vote_count,
-                   a.keaktifan, a.kepemimpinan, a.pengalaman, a.disiplin, a.pendidikan, a.usia
+                   a.pendidikan, a.cluster,
+                   AVG(p.keaktifan) as avg_keaktifan,
+                   AVG(p.kepemimpinan) as avg_kepemimpinan,
+                   AVG(p.pengalaman) as avg_pengalaman,
+                   AVG(p.disiplin) as avg_disiplin,
+                   AVG(p.komunikasi) as avg_komunikasi
             FROM anggota a
             LEFT JOIN voting v ON a.id = v.kandidat_id AND v.voting_period_id = %s
+            LEFT JOIN penilaian p ON a.id = p.anggota_id
             WHERE a.status = 'kandidat'
-            GROUP BY a.id, a.nama, a.keaktifan, a.kepemimpinan, a.pengalaman, a.disiplin, a.pendidikan, a.usia
+            GROUP BY a.id, a.nama, a.pendidikan, a.cluster
             ORDER BY vote_count DESC, a.nama
         """, (period_id,), fetch=True)
         
@@ -974,11 +980,17 @@ def hasil():
         if current_period:
             results = execute_query("""
                 SELECT a.id, a.nama, COUNT(v.id) as vote_count,
-                       a.keaktifan, a.kepemimpinan, a.pengalaman, a.disiplin, a.pendidikan, a.usia
+                       a.pendidikan, a.cluster,
+                       AVG(p.keaktifan) as avg_keaktifan,
+                       AVG(p.kepemimpinan) as avg_kepemimpinan,
+                       AVG(p.pengalaman) as avg_pengalaman,
+                       AVG(p.disiplin) as avg_disiplin,
+                       AVG(p.komunikasi) as avg_komunikasi
                 FROM anggota a
                 LEFT JOIN voting v ON a.id = v.kandidat_id AND v.voting_period_id = %s
+                LEFT JOIN penilaian p ON a.id = p.anggota_id
                 WHERE a.status = 'kandidat'
-                GROUP BY a.id, a.nama, a.keaktifan, a.kepemimpinan, a.pengalaman, a.disiplin, a.pendidikan, a.usia
+                GROUP BY a.id, a.nama, a.pendidikan, a.cluster
                 ORDER BY vote_count DESC, a.nama
             """, (current_period[0],), fetch=True)
             
@@ -992,11 +1004,17 @@ def hasil():
             # No active period, show all results
             results = execute_query("""
                 SELECT a.id, a.nama, COUNT(v.id) as vote_count,
-                       a.keaktifan, a.kepemimpinan, a.pengalaman, a.disiplin, a.pendidikan, a.usia
+                       a.pendidikan, a.cluster,
+                       AVG(p.keaktifan) as avg_keaktifan,
+                       AVG(p.kepemimpinan) as avg_kepemimpinan,
+                       AVG(p.pengalaman) as avg_pengalaman,
+                       AVG(p.disiplin) as avg_disiplin,
+                       AVG(p.komunikasi) as avg_komunikasi
                 FROM anggota a
                 LEFT JOIN voting v ON a.id = v.kandidat_id
+                LEFT JOIN penilaian p ON a.id = p.anggota_id
                 WHERE a.status = 'kandidat'
-                GROUP BY a.id, a.nama, a.keaktifan, a.kepemimpinan, a.pengalaman, a.disiplin, a.pendidikan, a.usia
+                GROUP BY a.id, a.nama, a.pendidikan, a.cluster
                 ORDER BY vote_count DESC, a.nama
             """, fetch=True)
             
@@ -1019,32 +1037,45 @@ def hasil():
     # Get K-Means cluster results for display
     cluster_results = {}
     try:
-        # Get all members with their cluster assignments
+        # Get all members with their cluster assignments and average ratings
         members = execute_query("""
-            SELECT nama, keaktifan, kepemimpinan, pengalaman, disiplin, pendidikan, usia, cluster
-            FROM anggota 
-            WHERE cluster IS NOT NULL
-            ORDER BY cluster, nama
+            SELECT a.nama, a.pendidikan, a.cluster,
+                   AVG(p.keaktifan) as avg_keaktifan,
+                   AVG(p.kepemimpinan) as avg_kepemimpinan,
+                   AVG(p.pengalaman) as avg_pengalaman,
+                   AVG(p.disiplin) as avg_disiplin,
+                   AVG(p.komunikasi) as avg_komunikasi,
+                   COUNT(p.id) as rating_count
+            FROM anggota a
+            LEFT JOIN penilaian p ON a.id = p.anggota_id
+            WHERE a.cluster IS NOT NULL
+            GROUP BY a.id, a.nama, a.pendidikan, a.cluster
+            ORDER BY a.cluster, a.nama
         """, fetch=True)
         
         if members:
             for member in members:
                 cluster_name = ""
-                if member[7] == 0:  # cluster 0
+                if member[2] == 0:  # cluster column
                     cluster_name = "Sangat Layak"
-                elif member[7] == 1:  # cluster 1
+                elif member[2] == 1:
                     cluster_name = "Cukup Layak"
-                else:  # cluster 2
+                else:
                     cluster_name = "Kurang Layak"
                 
                 if cluster_name not in cluster_results:
                     cluster_results[cluster_name] = []
                 
-                # Add member data with average score
-                avg_score = (member[1] + member[2] + member[3] + member[4] + member[5]) / 5
+                # Calculate average score from 5 criteria
+                if member[3] is not None:  # if has ratings
+                    avg_score = (member[3] + member[4] + member[5] + member[6] + member[7]) / 5
+                else:
+                    avg_score = 0
+                
                 member_data = list(member) + [avg_score]
                 cluster_results[cluster_name].append(member_data)
-    except:
+    except Exception as e:
+        print(f"Error getting cluster results: {e}")
         cluster_results = {}
     
     return render_template('hasil.html', 
