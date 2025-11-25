@@ -316,10 +316,17 @@ def run_kmeans():
         data.append(features)
         member_ids.append(member[0])
     
-    data = np.array(data)
+    data = np.array(data, dtype=float)
     
-    # Normalize data (0-100 scale)
-    data_normalized = (data - data.min(axis=0)) / (data.max(axis=0) - data.min(axis=0)) * 100
+    # Normalize data (0-100 scale) with safe division
+    data_min = data.min(axis=0)
+    data_max = data.max(axis=0)
+    data_range = data_max - data_min
+    
+    # Avoid division by zero: if range is 0, keep original values
+    data_range[data_range == 0] = 1
+    
+    data_normalized = (data - data_min) / data_range * 100
     
     # Run K-Means
     kmeans = KMeansCluster(k=3)

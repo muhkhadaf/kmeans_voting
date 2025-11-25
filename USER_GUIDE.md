@@ -385,8 +385,19 @@ A: Sistem tidak mengizinkan periode yang bertabrakan. Anda harus mengubah jadwal
 **Q: Apakah bisa melihat siapa yang voting kandidat tertentu?**
 A: Tidak, sistem menjaga kerahasiaan voting. Admin hanya bisa melihat jumlah total suara per kandidat.
 
-**Q: Bagaimana cara mengganti password admin?**
-A: Saat ini harus dilakukan manual di database. Fitur change password akan ditambahkan di versi mendatang.
+**Q: Bagaimana cara menambahkan admin baru?**
+A: Gunakan skrip `add_admin.py`:
+```bash
+python add_admin.py
+```
+Ikuti petunjuk untuk memasukkan username dan password admin baru.
+
+**Q: Bagaimana cara mengelola admin (hapus, ganti password)?**
+A: Gunakan skrip `manage_admin.py`:
+```bash
+python manage_admin.py
+```
+Menu tersedia: lihat daftar admin, tambah admin, hapus admin, ganti password admin.
 
 ### Untuk User
 
@@ -436,6 +447,38 @@ A: Perlu modifikasi kode di app.py dan database schema. Hubungi developer.
 
 ---
 
+## 🛠️ Utilitas Command Line
+
+### Mengelola Admin via Terminal
+
+#### 1. Tambah Admin Baru
+```bash
+python add_admin.py
+```
+Script ini akan memandu Anda untuk:
+- Melihat daftar admin yang ada
+- Memasukkan username admin baru
+- Memasukkan password (minimal 6 karakter)
+- Konfirmasi password
+- Validasi username tidak duplikat
+
+#### 2. Kelola Admin (Menu Lengkap)
+```bash
+python manage_admin.py
+```
+Menu yang tersedia:
+- **[1] Lihat Daftar Admin** - Menampilkan semua admin
+- **[2] Tambah Admin Baru** - Menambahkan admin baru
+- **[3] Hapus Admin** - Menghapus admin (tidak bisa hapus admin terakhir)
+- **[4] Ganti Password Admin** - Mengubah password admin
+- **[0] Keluar** - Keluar dari program
+
+**Catatan Keamanan:**
+- Password di-hash dengan aman menggunakan Werkzeug
+- Tidak bisa menghapus admin terakhir
+- Perlu verifikasi password lama untuk ganti password
+- Username harus unik
+
 ## 📞 Bantuan Lebih Lanjut
 
 Jika mengalami masalah atau memiliki pertanyaan:
@@ -443,7 +486,8 @@ Jika mengalami masalah atau memiliki pertanyaan:
 1. Baca dokumentasi lengkap di README.md
 2. Periksa INSTALLATION.md untuk masalah instalasi
 3. Lihat CHANGELOG.md untuk informasi perubahan
-4. Hubungi administrator sistem
+4. Gunakan utilitas command line untuk kelola admin
+5. Hubungi administrator sistem
 
 ---
 

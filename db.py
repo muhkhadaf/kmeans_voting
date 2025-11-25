@@ -1,3 +1,5 @@
+import pymysql
+pymysql.install_as_MySQLdb()
 import MySQLdb
 from flask import g
 import os
@@ -7,7 +9,7 @@ DB_CONFIG = {
     'host': 'localhost',
     'user': 'root',
     'password': '',  # Sesuaikan dengan password MySQL Anda
-    'database': 'kmeans_voting'
+    'database': 'votings'
 }
 
 def get_db():
@@ -53,6 +55,17 @@ def init_db():
             )
         """)
         
+        # Create user table FIRST (before penilaian)
+        cursor.execute("""
+            CREATE TABLE IF NOT EXISTS user (
+                id INT AUTO_INCREMENT PRIMARY KEY,
+                nama VARCHAR(100) NOT NULL,
+                username VARCHAR(50) UNIQUE NOT NULL,
+                password VARCHAR(255) NOT NULL,
+                has_voted TINYINT DEFAULT 0
+            )
+        """)
+        
         # Create anggota table (simplified - only basic info)
         cursor.execute("""
             CREATE TABLE IF NOT EXISTS anggota (
@@ -66,7 +79,7 @@ def init_db():
             )
         """)
         
-        # Create penilaian table (user ratings for members)
+        # Create penilaian table (user ratings for members) - AFTER user and anggota
         cursor.execute("""
             CREATE TABLE IF NOT EXISTS penilaian (
                 id INT AUTO_INCREMENT PRIMARY KEY,
@@ -81,17 +94,6 @@ def init_db():
                 FOREIGN KEY (user_id) REFERENCES user(id) ON DELETE CASCADE,
                 FOREIGN KEY (anggota_id) REFERENCES anggota(id) ON DELETE CASCADE,
                 UNIQUE KEY unique_rating (user_id, anggota_id)
-            )
-        """)
-        
-        # Create user table
-        cursor.execute("""
-            CREATE TABLE IF NOT EXISTS user (
-                id INT AUTO_INCREMENT PRIMARY KEY,
-                nama VARCHAR(100) NOT NULL,
-                username VARCHAR(50) UNIQUE NOT NULL,
-                password VARCHAR(255) NOT NULL,
-                has_voted TINYINT DEFAULT 0
             )
         """)
         

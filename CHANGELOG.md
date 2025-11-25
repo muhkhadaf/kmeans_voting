@@ -242,13 +242,47 @@ python migrate_db.py
 #### Template Baru:
 - `templates/user_change_password.html` - Halaman ganti password untuk user
 
+### 🛠️ Utilitas Command Line
+
+#### 1. Script Tambah Admin (`add_admin.py`)
+- Script Python untuk menambahkan admin baru via terminal
+- Input username dan password dengan validasi
+- Hidden password input menggunakan `getpass`
+- Validasi username tidak duplikat
+- Validasi password minimal 6 karakter
+- Menampilkan daftar admin yang ada
+- Konfirmasi sebelum menyimpan
+
+#### 2. Script Kelola Admin (`manage_admin.py`)
+- Menu interaktif untuk kelola admin
+- Fitur: lihat daftar, tambah, hapus, ganti password
+- Safety feature: tidak bisa hapus admin terakhir
+- Verifikasi password lama untuk ganti password
+- User-friendly dengan emoji dan formatting
+
+**Cara Menggunakan:**
+```bash
+# Tambah admin baru
+python add_admin.py
+
+# Kelola admin (menu lengkap)
+python manage_admin.py
+```
+
 ### 📝 Perubahan Dokumentasi
 
 #### USER_GUIDE.md
 - Tambah section "Mengganti Password" untuk user
 - Tambah section "Menghapus User" untuk admin
-- Update FAQ dengan pertanyaan tentang ganti password
+- Tambah section "Utilitas Command Line" untuk kelola admin
+- Update FAQ dengan pertanyaan tentang kelola admin
 - Tips keamanan password
+
+#### ADMIN_SCRIPTS.md (Baru)
+- Dokumentasi lengkap untuk skrip admin
+- Panduan troubleshooting
+- Best practices
+- Contoh output dan workflow
 
 ### 🔒 Keamanan
 
@@ -262,6 +296,9 @@ python migrate_db.py
 - Fixed: User sekarang dapat mengelola password sendiri
 - Fixed: Admin dapat menghapus user yang tidak aktif
 - Fixed: Cascade delete mencegah orphaned data
+- Fixed: K-Means normalisasi error saat semua nilai sama (division by zero)
+- Fixed: Urutan pembuatan tabel database untuk foreign key constraint
+- Fixed: PyMySQL compatibility untuk Windows (pengganti MySQLdb)
 
 ### ⚠️ Catatan Penting
 

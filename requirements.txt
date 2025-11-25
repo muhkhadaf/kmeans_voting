@@ -1,6 +1,9 @@
-Flask==2.3.3
-Flask-MySQLdb==1.0.1
-numpy==1.24.3
-Werkzeug==2.3.7
-mysqlclient==2.2.0
-pytz==2023.3
+Flask>=2.3.3
+numpy>=1.24.3
+Werkzeug>=2.3.7
+pytz>=2023.3
+pymysql>=1.1.0
+
+# Alternative untuk Windows (jika mysqlclient gagal install):
+# mysqlclient==2.2.0  # Memerlukan Visual C++ Build Tools
+# Flask-MySQLdb==1.0.1  # Memerlukan mysqlclient

@@ -1,0 +1,274 @@
+=================================================================
+  DEMO: Penggunaan Admin Scripts
+  K-Means Voting System v2.1.0
+=================================================================
+
+=== SCENARIO 1: Tambah Admin Baru ===
+
+$ python add_admin.py
+
+==================================================
+  TAMBAH ADMIN BARU - K-Means Voting System
+==================================================
+
+📋 Daftar Admin yang Ada:
+----------------------------------------
+  ID: 1 | Username: admin
+----------------------------------------
+
+➕ Tambah Admin Baru
+--------------------------------------------------
+
+Username admin baru: superadmin
+
+Password admin baru: ********
+Konfirmasi password: ********
+
+==================================================
+📝 Konfirmasi Data Admin Baru:
+--------------------------------------------------
+  Username: superadmin
+  Password: ********
+--------------------------------------------------
+
+Tambahkan admin ini? (y/n): y
+
+==================================================
+✅ ADMIN BERHASIL DITAMBAHKAN!
+==================================================
+  Username: superadmin
+  Password: (tersimpan dengan aman)
+
+💡 Gunakan kredensial ini untuk login sebagai admin
+   URL: http://127.0.0.1:5000/login
+==================================================
+
+📋 Daftar Admin yang Ada:
+----------------------------------------
+  ID: 1 | Username: admin
+  ID: 2 | Username: superadmin
+----------------------------------------
+
+
+=================================================================
+
+=== SCENARIO 2: Kelola Admin - Lihat Daftar ===
+
+$ python manage_admin.py
+
+==================================================
+  KELOLA ADMIN - K-Means Voting System
+==================================================
+
+📋 Menu:
+  [1] Lihat Daftar Admin
+  [2] Tambah Admin Baru
+  [3] Hapus Admin
+  [4] Ganti Password Admin
+  [0] Keluar
+--------------------------------------------------
+
+Pilih menu: 1
+
+📋 Daftar Admin:
+----------------------------------------
+  [1] admin
+  [2] superadmin
+----------------------------------------
+
+Tekan Enter untuk melanjutkan...
+
+
+=================================================================
+
+=== SCENARIO 3: Kelola Admin - Ganti Password ===
+
+==================================================
+  KELOLA ADMIN - K-Means Voting System
+==================================================
+
+📋 Menu:
+  [1] Lihat Daftar Admin
+  [2] Tambah Admin Baru
+  [3] Hapus Admin
+  [4] Ganti Password Admin
+  [0] Keluar
+--------------------------------------------------
+
+Pilih menu: 4
+
+📋 Daftar Admin:
+----------------------------------------
+  [1] admin
+  [2] superadmin
+----------------------------------------
+
+🔑 GANTI PASSWORD ADMIN
+--------------------------------------------------
+Masukkan ID admin: 1
+
+Ganti password untuk: admin
+Password lama: *********
+Password baru: **********
+Konfirmasi password baru: **********
+✅ Password admin 'admin' berhasil diubah!
+
+Tekan Enter untuk melanjutkan...
+
+
+=================================================================
+
+=== SCENARIO 4: Kelola Admin - Hapus Admin ===
+
+==================================================
+  KELOLA ADMIN - K-Means Voting System
+==================================================
+
+📋 Menu:
+  [1] Lihat Daftar Admin
+  [2] Tambah Admin Baru
+  [3] Hapus Admin
+  [4] Ganti Password Admin
+  [0] Keluar
+--------------------------------------------------
+
+Pilih menu: 3
+
+📋 Daftar Admin:
+----------------------------------------
+  [1] admin
+  [2] superadmin
+----------------------------------------
+
+🗑️  HAPUS ADMIN
+--------------------------------------------------
+Masukkan ID admin yang akan dihapus: 2
+Yakin ingin menghapus admin 'superadmin'? (y/n): y
+✅ Admin 'superadmin' berhasil dihapus!
+
+Tekan Enter untuk melanjutkan...
+
+
+=================================================================
+
+=== SCENARIO 5: Error Handling - Username Duplikat ===
+
+$ python add_admin.py
+
+==================================================
+  TAMBAH ADMIN BARU - K-Means Voting System
+==================================================
+
+📋 Daftar Admin yang Ada:
+----------------------------------------
+  ID: 1 | Username: admin
+----------------------------------------
+
+➕ Tambah Admin Baru
+--------------------------------------------------
+
+Username admin baru: admin
+❌ Username 'admin' sudah digunakan!
+Coba username lain? (y/n): y
+
+Username admin baru: admin2
+
+Password admin baru: ******
+Konfirmasi password: ******
+
+✅ ADMIN BERHASIL DITAMBAHKAN!
+
+
+=================================================================
+
+=== SCENARIO 6: Error Handling - Password Tidak Cocok ===
+
+$ python add_admin.py
+
+Username admin baru: testadmin
+
+Password admin baru: ******
+Konfirmasi password: *******
+❌ Password tidak cocok!
+Coba lagi? (y/n): y
+
+Password admin baru: ******
+Konfirmasi password: ******
+
+✅ ADMIN BERHASIL DITAMBAHKAN!
+
+
+=================================================================
+
+=== SCENARIO 7: Error Handling - Password Terlalu Pendek ===
+
+$ python add_admin.py
+
+Username admin baru: testadmin
+
+Password admin baru: ***
+❌ Password minimal 6 karakter!
+
+Password admin baru: ******
+Konfirmasi password: ******
+
+✅ ADMIN BERHASIL DITAMBAHKAN!
+
+
+=================================================================
+
+=== SCENARIO 8: Safety Feature - Tidak Bisa Hapus Admin Terakhir ===
+
+$ python manage_admin.py
+
+Pilih menu: 3
+
+📋 Daftar Admin:
+----------------------------------------
+  [1] admin
+----------------------------------------
+
+🗑️  HAPUS ADMIN
+--------------------------------------------------
+Masukkan ID admin yang akan dihapus: 1
+❌ Tidak bisa menghapus admin terakhir!
+
+Tekan Enter untuk melanjutkan...
+
+
+=================================================================
+
+=== SCENARIO 9: Keyboard Interrupt ===
+
+$ python add_admin.py
+
+Username admin baru: ^C
+
+❌ Dibatalkan oleh user
+
+
+=================================================================
+
+=== SCENARIO 10: Database Connection Error ===
+
+$ python add_admin.py
+
+❌ Error koneksi database: (2003, "Can't connect to MySQL server on 'localhost' (10061)")
+
+Pastikan:
+1. MySQL server sudah berjalan
+2. Database 'kmeans_voting' sudah dibuat
+3. Kredensial database di DB_CONFIG sudah benar
+
+
+=================================================================
+
+TIPS:
+- Gunakan Ctrl+C untuk membatalkan operasi kapan saja
+- Selalu backup database sebelum operasi penting
+- Minimal miliki 2 admin untuk backup
+- Ganti password admin default setelah instalasi
+- Gunakan password yang kuat (minimal 8 karakter)
+
+=================================================================
+
