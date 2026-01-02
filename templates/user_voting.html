@@ -19,11 +19,7 @@
                     <h1 class="text-xl font-bold text-gray-900">Sistem Voting Ketua Karang Taruna</h1>
                 </div>
                 <div class="flex items-center space-x-4">
-                    <a href="{{ url_for('user_penilaian') }}" 
-                       class="text-blue-600 hover:text-blue-800 transition-colors">
-                        <i class="fas fa-star mr-1"></i>
-                        Penilaian
-                    </a>
+
                     <span class="text-gray-700">
                         <i class="fas fa-user mr-2"></i>
                         {{ session.user_name }}
@@ -43,7 +39,7 @@
         </div>
     </nav>
 
-    <div class="max-w-4xl mx-auto py-8 px-4 sm:px-6 lg:px-8">
+    <div class="max-w-7xl mx-auto py-8 px-4 sm:px-6 lg:px-8">
         <!-- Flash Messages -->
         {% with messages = get_flashed_messages(with_categories=true) %}
             {% if messages %}
@@ -143,25 +139,7 @@
         </div>
         {% endif %}
 
-        {% if has_voted %}
-        <!-- Already Voted Message -->
-        <div class="bg-white rounded-lg shadow-lg p-8 text-center">
-            <div class="mx-auto h-16 w-16 bg-green-100 rounded-full flex items-center justify-center mb-4">
-                <i class="fas fa-check-circle text-green-600 text-2xl"></i>
-            </div>
-            <h2 class="text-2xl font-bold text-gray-900 mb-4">Terima Kasih!</h2>
-            <p class="text-gray-600 mb-6">
-                Anda telah memberikan suara dalam pemilihan Ketua Karang Taruna ini.
-                Suara Anda telah tercatat dan tidak dapat diubah.
-            </p>
-            <div class="bg-blue-50 rounded-lg p-4">
-                <p class="text-blue-800 text-sm">
-                    <i class="fas fa-info-circle mr-2"></i>
-                    Hasil voting akan diumumkan setelah periode voting berakhir.
-                </p>
-            </div>
-        </div>
-        {% elif not candidates %}
+        {% if not candidates %}
         <!-- No Candidates Message -->
         <div class="bg-white rounded-lg shadow-lg p-8 text-center">
             <div class="mx-auto h-16 w-16 bg-yellow-100 rounded-full flex items-center justify-center mb-4">
@@ -179,10 +157,10 @@
             <div class="px-6 py-4 bg-blue-600 text-white">
                 <h2 class="text-2xl font-bold">
                     <i class="fas fa-vote-yea mr-3"></i>
-                    Pilih Kandidat Ketua Karang Taruna
+                    Penilaian Kandidat Ketua Karang Taruna
                 </h2>
                 <p class="mt-2 text-blue-100">
-                    Pilih satu kandidat yang menurut Anda paling layak menjadi ketua
+                    Berikan penilaian Anda untuk setiap kandidat berdasarkan 5 kriteria.
                 </p>
             </div>
 
@@ -194,10 +172,10 @@
                         <div class="text-sm text-yellow-800">
                             <p class="font-semibold mb-1">Petunjuk Voting:</p>
                             <ul class="list-disc list-inside space-y-1">
-                                <li>Pilih salah satu kandidat dengan mengklik tombol "Pilih Kandidat"</li>
-                                <li>Anda hanya dapat memberikan satu suara</li>
-                                <li>Keputusan Anda tidak dapat diubah setelah dikonfirmasi</li>
-                                <li>Pastikan pilihan Anda sudah tepat sebelum mengkonfirmasi</li>
+                                <li>Klik tombol "Beri Penilaian" untuk menilai kandidat</li>
+                                <li>Berikan skor 1-100 untuk setiap kriteria (Keaktifan, Kepemimpinan, Pengalaman, Disiplin, Komunikasi)</li>
+                                <li>Anda dapat menilai lebih dari satu kandidat</li>
+                                <li>Pemenang ditentukan berdasarkan rata-rata skor tertinggi</li>
                             </ul>
                         </div>
                     </div>
@@ -229,48 +207,26 @@
                                     <p class="text-gray-700 mt-1 text-xs">{{ candidate[3][:100] }}{% if candidate[3]|length > 100 %}...{% endif %}</p>
                                 </div>
                                 {% endif %}
-                                <hr class="my-2">
-                                <div class="text-xs text-gray-600 mb-2">Penilaian Rata-rata:</div>
-                                {% if candidate[4] %}
-                                <div class="flex justify-between text-sm">
-                                    <span class="text-gray-600">Keaktifan:</span>
-                                    <span class="font-medium">{{ "%.1f"|format(candidate[4]) }}</span>
-                                </div>
-                                <div class="flex justify-between text-sm">
-                                    <span class="text-gray-600">Kepemimpinan:</span>
-                                    <span class="font-medium">{{ "%.1f"|format(candidate[5]) }}</span>
-                                </div>
-                                <div class="flex justify-between text-sm">
-                                    <span class="text-gray-600">Pengalaman:</span>
-                                    <span class="font-medium">{{ "%.1f"|format(candidate[6]) }}</span>
-                                </div>
-                                <div class="flex justify-between text-sm">
-                                    <span class="text-gray-600">Disiplin:</span>
-                                    <span class="font-medium">{{ "%.1f"|format(candidate[7]) }}</span>
-                                </div>
-                                <div class="flex justify-between text-sm">
-                                    <span class="text-gray-600">Komunikasi:</span>
-                                    <span class="font-medium">{{ "%.1f"|format(candidate[8]) }}</span>
-                                </div>
-                                <div class="flex justify-between text-sm">
-                                    <span class="text-gray-600">Jumlah Penilai:</span>
-                                    <span class="font-medium">{{ candidate[9] }} orang</span>
-                                </div>
-                                <hr class="my-2">
-                                <div class="flex justify-between text-sm font-semibold">
-                                    <span class="text-gray-700">Skor Rata-rata:</span>
-                                    <span class="text-blue-600">{{ "%.1f"|format((candidate[4] + candidate[5] + candidate[6] + candidate[7] + candidate[8]) / 5) }}</span>
+                                
+                                <!-- Rating Status -->
+                                {% if candidate[0] in rated_candidate_ids %}
+                                <div class="mt-4 p-2 bg-green-50 border border-green-200 rounded text-center">
+                                    <i class="fas fa-check-circle text-green-600 mr-2"></i>
+                                    <span class="text-green-800 text-xs font-medium">Sudah Dinilai</span>
                                 </div>
                                 {% else %}
-                                <div class="text-sm text-gray-500 italic">Belum ada penilaian</div>
+                                <div class="mt-4 p-2 bg-gray-50 border border-gray-200 rounded text-center">
+                                    <i class="fas fa-circle text-gray-400 mr-2"></i>
+                                    <span class="text-gray-600 text-xs font-medium">Belum Dinilai</span>
+                                </div>
                                 {% endif %}
                             </div>
 
                             <!-- Vote Button -->
-                            <button onclick="confirmVote({{ candidate[0] }}, '{{ candidate[1] }}')"
+                            <button onclick="openRatingModal({{ candidate[0] }}, '{{ candidate[1] }}', '{{ candidate[3] if candidate[3] else '' }}')"
                                     class="w-full bg-blue-600 hover:bg-blue-700 text-white font-semibold py-3 px-4 rounded-lg transition-colors duration-200 flex items-center justify-center">
-                                <i class="fas fa-vote-yea mr-2"></i>
-                                Pilih Kandidat
+                                <i class="fas fa-star mr-2"></i>
+                                {% if candidate[0] in rated_candidate_ids %}Edit Penilaian{% else %}Beri Penilaian{% endif %}
                             </button>
                         </div>
                     </div>
@@ -281,36 +237,111 @@
         {% endif %}
     </div>
 
-    <!-- Confirmation Modal -->
-    <div id="confirmModal" class="fixed inset-0 bg-gray-600 bg-opacity-50 hidden overflow-y-auto h-full w-full z-50">
-        <div class="relative top-20 mx-auto p-5 border w-11/12 md:w-1/2 lg:w-1/3 shadow-lg rounded-md bg-white">
+    <!-- Rating Modal -->
+    <div id="ratingModal" class="fixed inset-0 bg-gray-600 bg-opacity-50 hidden overflow-y-auto h-full w-full z-50">
+        <div class="relative top-10 mx-auto p-5 border w-11/12 md:w-3/4 lg:w-1/2 shadow-lg rounded-md bg-white mb-10">
             <div class="mt-3">
-                <div class="text-center">
-                    <div class="mx-auto h-16 w-16 bg-blue-100 rounded-full flex items-center justify-center mb-4">
-                        <i class="fas fa-question-circle text-blue-600 text-2xl"></i>
+                <div class="flex justify-between items-center mb-4">
+                    <div>
+                        <h3 class="text-lg font-medium text-gray-900">Penilaian Kandidat</h3>
+                        <p class="text-sm text-gray-600">Berikan penilaian untuk <span id="candidateName" class="font-bold"></span></p>
                     </div>
-                    <h3 class="text-lg font-medium text-gray-900 mb-4">Konfirmasi Pilihan Anda</h3>
-                    <p class="text-gray-600 mb-6">
-                        Anda akan memberikan suara untuk:
-                        <br><strong id="candidateName" class="text-blue-600"></strong>
-                    </p>
-                    <p class="text-sm text-red-600 mb-6">
-                        <i class="fas fa-exclamation-triangle mr-1"></i>
-                        Keputusan ini tidak dapat diubah setelah dikonfirmasi!
-                    </p>
+                    <button onclick="closeRatingModal()" class="text-gray-400 hover:text-gray-600">
+                        <i class="fas fa-times text-xl"></i>
+                    </button>
                 </div>
                 
-                <form id="voteForm" method="POST" action="{{ url_for('submit_vote') }}">
-                    <input type="hidden" id="candidateId" name="kandidat_id">
-                    <div class="flex justify-center space-x-3">
-                        <button type="button" onclick="closeConfirmModal()"
-                                class="px-6 py-2 bg-gray-300 text-gray-700 rounded-md hover:bg-gray-400 transition-colors">
+                <form id="ratingForm" method="POST" action="{{ url_for('submit_vote') }}" class="space-y-4">
+                    <input type="hidden" id="kandidat_id" name="kandidat_id">
+                    
+                    <!-- Visi Misi Display -->
+                    <div id="visiMisiSection" class="p-4 bg-blue-50 border border-blue-200 rounded-lg">
+                        <h4 class="font-semibold text-gray-900 mb-2">Visi & Misi:</h4>
+                        <p id="visiMisiText" class="text-sm text-gray-700"></p>
+                    </div>
+
+                    <!-- Rating Criteria -->
+                    <div class="space-y-4">
+                        <div>
+                            <label class="block text-sm font-medium text-gray-700 mb-2">
+                                Keaktifan (1-100)
+                                <span class="text-gray-500 text-xs">- Seberapa aktif dalam kegiatan organisasi</span>
+                            </label>
+                            <input type="range" name="keaktifan" id="keaktifan" min="1" max="100" value="50" 
+                                   class="w-full" oninput="updateValue('keaktifan')">
+                            <div class="flex justify-between text-sm text-gray-600 mt-1">
+                                <span>1</span>
+                                <span class="font-bold text-blue-600" id="keaktifan_value">50</span>
+                                <span>100</span>
+                            </div>
+                        </div>
+
+                        <div>
+                            <label class="block text-sm font-medium text-gray-700 mb-2">
+                                Kepemimpinan (1-100)
+                                <span class="text-gray-500 text-xs">- Kemampuan memimpin dan mengambil keputusan</span>
+                            </label>
+                            <input type="range" name="kepemimpinan" id="kepemimpinan" min="1" max="100" value="50" 
+                                   class="w-full" oninput="updateValue('kepemimpinan')">
+                            <div class="flex justify-between text-sm text-gray-600 mt-1">
+                                <span>1</span>
+                                <span class="font-bold text-blue-600" id="kepemimpinan_value">50</span>
+                                <span>100</span>
+                            </div>
+                        </div>
+
+                        <div>
+                            <label class="block text-sm font-medium text-gray-700 mb-2">
+                                Pengalaman (1-100)
+                                <span class="text-gray-500 text-xs">- Pengalaman organisasi dan kepanitiaan</span>
+                            </label>
+                            <input type="range" name="pengalaman" id="pengalaman" min="1" max="100" value="50" 
+                                   class="w-full" oninput="updateValue('pengalaman')">
+                            <div class="flex justify-between text-sm text-gray-600 mt-1">
+                                <span>1</span>
+                                <span class="font-bold text-blue-600" id="pengalaman_value">50</span>
+                                <span>100</span>
+                            </div>
+                        </div>
+
+                        <div>
+                            <label class="block text-sm font-medium text-gray-700 mb-2">
+                                Disiplin (1-100)
+                                <span class="text-gray-500 text-xs">- Kedisiplinan dan tanggung jawab</span>
+                            </label>
+                            <input type="range" name="disiplin" id="disiplin" min="1" max="100" value="50" 
+                                   class="w-full" oninput="updateValue('disiplin')">
+                            <div class="flex justify-between text-sm text-gray-600 mt-1">
+                                <span>1</span>
+                                <span class="font-bold text-blue-600" id="disiplin_value">50</span>
+                                <span>100</span>
+                            </div>
+                        </div>
+
+                        <div>
+                            <label class="block text-sm font-medium text-gray-700 mb-2">
+                                Komunikasi (1-100)
+                                <span class="text-gray-500 text-xs">- Kemampuan berkomunikasi dan bersosialisasi</span>
+                            </label>
+                            <input type="range" name="komunikasi" id="komunikasi" min="1" max="100" value="50" 
+                                   class="w-full" oninput="updateValue('komunikasi')">
+                            <div class="flex justify-between text-sm text-gray-600 mt-1">
+                                <span>1</span>
+                                <span class="font-bold text-blue-600" id="komunikasi_value">50</span>
+                                <span>100</span>
+                            </div>
+                        </div>
+                    </div>
+                    
+                    <div class="flex justify-end space-x-3 pt-4">
+                        <button type="button" onclick="closeRatingModal()"
+                                class="px-4 py-2 bg-gray-300 text-gray-700 rounded-md hover:bg-gray-400 transition-colors">
                             Batal
                         </button>
                         <button type="submit"
-                                class="px-6 py-2 bg-blue-600 text-white rounded-md hover:bg-blue-700 transition-colors">
-                            <i class="fas fa-check mr-2"></i>
-                            Konfirmasi Vote
+                                class="px-4 py-2 bg-blue-600 text-white rounded-md hover:bg-blue-700 transition-colors">
+                            <i class="fas fa-save mr-2"></i>
+                            Simpan Penilaian
                         </button>
                     </div>
                 </form>
@@ -319,21 +350,40 @@
     </div>
 
     <script>
-    function confirmVote(candidateId, candidateName) {
-        document.getElementById('candidateId').value = candidateId;
-        document.getElementById('candidateName').textContent = candidateName;
-        document.getElementById('confirmModal').classList.remove('hidden');
+    function openRatingModal(id, nama, visiMisi) {
+        document.getElementById('kandidat_id').value = id;
+        document.getElementById('candidateName').textContent = nama;
+        
+        if (visiMisi && visiMisi.trim() !== '') {
+            document.getElementById('visiMisiSection').style.display = 'block';
+            document.getElementById('visiMisiText').textContent = visiMisi;
+        } else {
+            document.getElementById('visiMisiSection').style.display = 'none';
+        }
+        
+        // Reset sliders to middle value or fetch existing if possible (future improvement)
+        ['keaktifan', 'kepemimpinan', 'pengalaman', 'disiplin', 'komunikasi'].forEach(field => {
+            document.getElementById(field).value = 50;
+            document.getElementById(field + '_value').textContent = 50;
+        });
+        
+        document.getElementById('ratingModal').classList.remove('hidden');
     }
 
-    function closeConfirmModal() {
-        document.getElementById('confirmModal').classList.add('hidden');
+    function closeRatingModal() {
+        document.getElementById('ratingModal').classList.add('hidden');
+    }
+
+    function updateValue(field) {
+        const value = document.getElementById(field).value;
+        document.getElementById(field + '_value').textContent = value;
     }
 
     // Close modal when clicking outside
     window.onclick = function(event) {
-        const modal = document.getElementById('confirmModal');
+        const modal = document.getElementById('ratingModal');
         if (event.target == modal) {
-            closeConfirmModal();
+            closeRatingModal();
         }
     }
 

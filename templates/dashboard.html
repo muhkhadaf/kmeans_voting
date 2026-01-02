@@ -79,7 +79,7 @@
             <i class="fas fa-chart-line text-green-600 mr-2"></i>
             Analisis K-Means
         </h3>
-        <p class="text-gray-600 mb-4">Jalankan algoritma K-Means untuk menentukan kandidat terbaik</p>
+        <p class="text-gray-600 mb-4">Analisis clustering opsional untuk visualisasi kelayakan kandidat</p>
         <a href="{{ url_for('analisis') }}" 
            class="inline-flex items-center bg-green-600 hover:bg-green-700 text-white px-4 py-2 rounded-lg transition-colors">
             <i class="fas fa-arrow-right mr-2"></i>
@@ -119,11 +119,12 @@
             <h4 class="font-semibold text-gray-700 mb-2">Alur Kerja Sistem:</h4>
             <ol class="list-decimal list-inside text-gray-600 space-y-1">
                 <li>Tambahkan data anggota karang taruna</li>
-                <li>Jalankan analisis K-Means untuk clustering</li>
-                <li>Pilih kandidat terbaik dari hasil analisis</li>
+                <li>Pilih kandidat dari daftar anggota</li>
                 <li>Buat akun user untuk voting</li>
-                <li>Lakukan proses voting</li>
+                <li>Buat dan kelola periode voting</li>
+                <li>Voters memberikan penilaian ke kandidat</li>
                 <li>Lihat hasil dan pemenang</li>
+                <li>(Opsional) Jalankan analisis K-Means untuk clustering</li>
             </ol>
         </div>
         <div>

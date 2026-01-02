@@ -220,38 +220,7 @@ def anggota():
 def add_anggota():
     if 'admin_logged_in' not in session:
         return redirect(url_for('login'))
-    
-    nama = request.form['nama']
-    pendidikan = request.form['pendidikan']
-    visi_misi = request.form['visi_misi']
-    
-    execute_query(
-        """INSERT INTO anggota (nama, pendidikan, visi_misi) 
-           VALUES (%s, %s, %s)""",
-        (nama, pendidikan, visi_misi)
-    )
-    
-    flash('Anggota berhasil ditambahkan!', 'success')
-    return redirect(url_for('anggota'))
-
-@app.route('/anggota/edit/<int:id>', methods=['POST'])
-def edit_anggota(id):
-    if 'admin_logged_in' not in session:
-        return redirect(url_for('login'))
-    
-    nama = request.form['nama']
-    pendidikan = request.form['pendidikan']
-    visi_misi = request.form['visi_misi']
-    
-    execute_query(
-        """UPDATE anggota SET nama=%s, pendidikan=%s, visi_misi=%s WHERE id=%s""",
-        (nama, pendidikan, visi_misi, id)
-    )
-    
-    flash('Data anggota berhasil diupdate!', 'success')
-    return redirect(url_for('anggota'))
-
-@app.route('/anggota/delete/<int:id>')
+@app.route('/anggota/delete/<int:id>', methods=['GET'])
 def delete_anggota(id):
     if 'admin_logged_in' not in session:
         return redirect(url_for('login'))
@@ -272,9 +241,10 @@ def analisis():
             a.nama,
             a.pendidikan,
             a.visi_misi,
-            COUNT(p.id) as rating_count
+            COUNT(v.id) as rating_count
         FROM anggota a
-        LEFT JOIN penilaian p ON a.id = p.anggota_id
+        LEFT JOIN voting v ON a.id = v.kandidat_id
+        WHERE a.status = 'kandidat'
         GROUP BY a.id, a.nama, a.pendidikan, a.visi_misi
         ORDER BY a.nama
     """, fetch=True)
@@ -290,20 +260,21 @@ def run_kmeans():
         SELECT 
             a.id,
             a.nama,
-            AVG(p.keaktifan) as avg_keaktifan,
-            AVG(p.kepemimpinan) as avg_kepemimpinan,
-            AVG(p.pengalaman) as avg_pengalaman,
-            AVG(p.disiplin) as avg_disiplin,
-            AVG(p.komunikasi) as avg_komunikasi,
-            COUNT(p.id) as rating_count
+            AVG(v.keaktifan) as avg_keaktifan,
+            AVG(v.kepemimpinan) as avg_kepemimpinan,
+            AVG(v.pengalaman) as avg_pengalaman,
+            AVG(v.disiplin) as avg_disiplin,
+            AVG(v.komunikasi) as avg_komunikasi,
+            COUNT(v.id) as rating_count
         FROM anggota a
-        LEFT JOIN penilaian p ON a.id = p.anggota_id
+        LEFT JOIN voting v ON a.id = v.kandidat_id
+        WHERE a.status = 'kandidat'
         GROUP BY a.id, a.nama
         HAVING rating_count > 0
     """, fetch=True)
     
     if not members_ratings or len(members_ratings) < 3:
-        flash('Minimal 3 anggota dengan penilaian diperlukan untuk analisis K-Means!', 'error')
+        flash('Minimal 3 kandidat dengan penilaian dari voters diperlukan untuk analisis K-Means!', 'error')
         return redirect(url_for('analisis'))
     
     # Prepare data for clustering
@@ -357,15 +328,15 @@ def hasil_analisis():
             a.nama,
             a.pendidikan,
             a.cluster,
-            AVG(p.keaktifan) as avg_keaktifan,
-            AVG(p.kepemimpinan) as avg_kepemimpinan,
-            AVG(p.pengalaman) as avg_pengalaman,
-            AVG(p.disiplin) as avg_disiplin,
-            AVG(p.komunikasi) as avg_komunikasi,
-            COUNT(p.id) as rating_count
+            AVG(v.keaktifan) as avg_keaktifan,
+            AVG(v.kepemimpinan) as avg_kepemimpinan,
+            AVG(v.pengalaman) as avg_pengalaman,
+            AVG(v.disiplin) as avg_disiplin,
+            AVG(v.komunikasi) as avg_komunikasi,
+            COUNT(v.id) as rating_count
         FROM anggota a
-        LEFT JOIN penilaian p ON a.id = p.anggota_id
-        WHERE a.cluster IS NOT NULL
+        LEFT JOIN voting v ON a.id = v.kandidat_id
+        WHERE a.cluster IS NOT NULL AND a.status = 'kandidat'
         GROUP BY a.id, a.nama, a.pendidikan, a.cluster
         ORDER BY a.cluster, a.nama
     """, fetch=True)
@@ -658,7 +629,13 @@ def voting_page():
         ORDER BY vote_count DESC, a.nama
     """, fetch=True)
     
-    return render_template('voting.html', candidates=candidates, users=users, voting_results=voting_results)
+    # Get all members (for candidate selection)
+    all_members = execute_query(
+        "SELECT * FROM anggota ORDER BY nama",
+        fetch=True
+    )
+    
+    return render_template('voting.html', candidates=candidates, users=users, voting_results=voting_results, all_members=all_members)
 
 @app.route('/user/add', methods=['POST'])
 def add_user():
@@ -713,13 +690,13 @@ def user_login():
             session['user_logged_in'] = True
             session['user_id'] = user[0]
             session['user_name'] = user[1]
-            return redirect(url_for('user_penilaian'))
+            return redirect(url_for('user_vote'))
         else:
             flash('Username atau password salah!', 'error')
     
     return render_template('user_login.html')
 
-@app.route('/user_penilaian')
+# @app.route('/user_penilaian')
 def user_penilaian():
     if 'user_logged_in' not in session:
         return redirect(url_for('user_login'))
@@ -736,7 +713,7 @@ def user_penilaian():
     
     return render_template('user_penilaian.html', members=members, rated_member_ids=rated_member_ids)
 
-@app.route('/submit_penilaian', methods=['POST'])
+# @app.route('/submit_penilaian', methods=['POST'])
 def submit_penilaian():
     if 'user_logged_in' not in session:
         return redirect(url_for('user_login'))
@@ -793,41 +770,30 @@ def user_vote():
     # Get current voting period
     current_period = get_current_voting_period()
     
-    # Check if user already voted in current period
-    existing_vote = execute_query(
-        "SELECT * FROM voting WHERE user_id = %s AND voting_period_id = %s",
-        (session['user_id'], current_period[0] if current_period else None),
-        fetch='one'
-    )
+    # Get user's existing ratings for current period
+    user_ratings = execute_query("""
+        SELECT kandidat_id FROM voting 
+        WHERE user_id = %s AND voting_period_id = %s
+    """, (session['user_id'], current_period[0] if current_period else None), fetch=True)
     
-    if existing_vote:
-        flash('Anda sudah melakukan voting pada periode ini!', 'info')
-        return redirect(url_for('vote_success'))
+    rated_candidate_ids = [r[0] for r in user_ratings] if user_ratings else []
     
-    # Get candidates with their average ratings
+    # Get candidates
     candidates = execute_query("""
         SELECT 
             a.id,
             a.nama,
             a.pendidikan,
-            a.visi_misi,
-            AVG(p.keaktifan) as avg_keaktifan,
-            AVG(p.kepemimpinan) as avg_kepemimpinan,
-            AVG(p.pengalaman) as avg_pengalaman,
-            AVG(p.disiplin) as avg_disiplin,
-            AVG(p.komunikasi) as avg_komunikasi,
-            COUNT(p.id) as rating_count
+            a.visi_misi
         FROM anggota a
-        LEFT JOIN penilaian p ON a.id = p.anggota_id
         WHERE a.status = 'kandidat'
-        GROUP BY a.id, a.nama, a.pendidikan, a.visi_misi
         ORDER BY a.nama
     """, fetch=True)
     
     # Get period status for countdown
     period_status = get_voting_period_status()
     
-    return render_template('user_voting.html', candidates=candidates, period_status=period_status)
+    return render_template('user_voting.html', candidates=candidates, period_status=period_status, rated_candidate_ids=rated_candidate_ids)
 
 @app.route('/submit_vote', methods=['POST'])
 def submit_vote():
@@ -846,24 +812,35 @@ def submit_vote():
         return redirect(url_for('user_vote'))
     
     kandidat_id = request.form['kandidat_id']
+    keaktifan = int(request.form['keaktifan'])
+    kepemimpinan = int(request.form['kepemimpinan'])
+    pengalaman = int(request.form['pengalaman'])
+    disiplin = int(request.form['disiplin'])
+    komunikasi = int(request.form['komunikasi'])
     user_id = session['user_id']
     
-    # Check if user already voted in current period
+    # Check if user already voted for THIS candidate in current period
     existing_vote = execute_query(
-        "SELECT * FROM voting WHERE user_id = %s AND voting_period_id = %s",
-        (user_id, current_period[0]),
+        "SELECT * FROM voting WHERE user_id = %s AND kandidat_id = %s",
+        (user_id, kandidat_id),
         fetch='one'
     )
     
     if existing_vote:
-        flash('Anda sudah melakukan voting pada periode ini!', 'error')
-        return redirect(url_for('user_vote'))
-    
-    # Submit vote with period tracking
-    execute_query(
-        "INSERT INTO voting (user_id, kandidat_id, voting_period_id) VALUES (%s, %s, %s)",
-        (user_id, kandidat_id, current_period[0])
-    )
+        # Update existing vote/rating
+        execute_query("""
+            UPDATE voting 
+            SET keaktifan=%s, kepemimpinan=%s, pengalaman=%s, disiplin=%s, komunikasi=%s, voting_period_id=%s
+            WHERE user_id=%s AND kandidat_id=%s
+        """, (keaktifan, kepemimpinan, pengalaman, disiplin, komunikasi, current_period[0], user_id, kandidat_id))
+        flash('Penilaian berhasil diupdate!', 'success')
+    else:
+        # Submit new vote/rating
+        execute_query("""
+            INSERT INTO voting (user_id, kandidat_id, voting_period_id, keaktifan, kepemimpinan, pengalaman, disiplin, komunikasi) 
+            VALUES (%s, %s, %s, %s, %s, %s, %s, %s)
+        """, (user_id, kandidat_id, current_period[0], keaktifan, kepemimpinan, pengalaman, disiplin, komunikasi))
+        flash('Penilaian berhasil disimpan!', 'success')
     
     # Update user voting status
     execute_query(
@@ -871,8 +848,7 @@ def submit_vote():
         (user_id,)
     )
     
-    flash('Vote berhasil disimpan!', 'success')
-    return redirect(url_for('vote_success'))
+    return redirect(url_for('user_vote'))
 
 @app.route('/vote_success')
 def vote_success():
@@ -923,10 +899,6 @@ def user_change_password():
             (hashed_password, session['user_id'])
         )
         
-        flash('Password berhasil diubah!', 'success')
-        return redirect(url_for('user_penilaian'))
-    
-    return render_template('user_change_password.html')
 
 @app.route('/user_logout')
 def user_logout():
@@ -949,17 +921,17 @@ def hasil():
         results = execute_query("""
             SELECT a.id, a.nama, COUNT(v.id) as vote_count,
                    a.pendidikan, a.cluster,
-                   AVG(p.keaktifan) as avg_keaktifan,
-                   AVG(p.kepemimpinan) as avg_kepemimpinan,
-                   AVG(p.pengalaman) as avg_pengalaman,
-                   AVG(p.disiplin) as avg_disiplin,
-                   AVG(p.komunikasi) as avg_komunikasi
+                   COALESCE(AVG(v.keaktifan), 0) as avg_keaktifan,
+                   COALESCE(AVG(v.kepemimpinan), 0) as avg_kepemimpinan,
+                   COALESCE(AVG(v.pengalaman), 0) as avg_pengalaman,
+                   COALESCE(AVG(v.disiplin), 0) as avg_disiplin,
+                   COALESCE(AVG(v.komunikasi), 0) as avg_komunikasi,
+                   (COALESCE(AVG(v.keaktifan), 0) + COALESCE(AVG(v.kepemimpinan), 0) + COALESCE(AVG(v.pengalaman), 0) + COALESCE(AVG(v.disiplin), 0) + COALESCE(AVG(v.komunikasi), 0)) / 5 as final_score
             FROM anggota a
             LEFT JOIN voting v ON a.id = v.kandidat_id AND v.voting_period_id = %s
-            LEFT JOIN penilaian p ON a.id = p.anggota_id
             WHERE a.status = 'kandidat'
             GROUP BY a.id, a.nama, a.pendidikan, a.cluster
-            ORDER BY vote_count DESC, a.nama
+            ORDER BY final_score DESC, vote_count DESC
         """, (period_id,), fetch=True)
         
         # Get total votes for specific period
@@ -980,18 +952,18 @@ def hasil():
         if current_period:
             results = execute_query("""
                 SELECT a.id, a.nama, COUNT(v.id) as vote_count,
-                       a.pendidikan, a.cluster,
-                       AVG(p.keaktifan) as avg_keaktifan,
-                       AVG(p.kepemimpinan) as avg_kepemimpinan,
-                       AVG(p.pengalaman) as avg_pengalaman,
-                       AVG(p.disiplin) as avg_disiplin,
-                       AVG(p.komunikasi) as avg_komunikasi
+                   a.pendidikan, a.cluster,
+                   COALESCE(AVG(v.keaktifan), 0) as avg_keaktifan,
+                   COALESCE(AVG(v.kepemimpinan), 0) as avg_kepemimpinan,
+                   COALESCE(AVG(v.pengalaman), 0) as avg_pengalaman,
+                   COALESCE(AVG(v.disiplin), 0) as avg_disiplin,
+                   COALESCE(AVG(v.komunikasi), 0) as avg_komunikasi,
+                   (COALESCE(AVG(v.keaktifan), 0) + COALESCE(AVG(v.kepemimpinan), 0) + COALESCE(AVG(v.pengalaman), 0) + COALESCE(AVG(v.disiplin), 0) + COALESCE(AVG(v.komunikasi), 0)) / 5 as final_score
                 FROM anggota a
                 LEFT JOIN voting v ON a.id = v.kandidat_id AND v.voting_period_id = %s
-                LEFT JOIN penilaian p ON a.id = p.anggota_id
                 WHERE a.status = 'kandidat'
                 GROUP BY a.id, a.nama, a.pendidikan, a.cluster
-                ORDER BY vote_count DESC, a.nama
+                ORDER BY final_score DESC, vote_count DESC
             """, (current_period[0],), fetch=True)
             
             total_votes_result = execute_query(
@@ -1004,18 +976,18 @@ def hasil():
             # No active period, show all results
             results = execute_query("""
                 SELECT a.id, a.nama, COUNT(v.id) as vote_count,
-                       a.pendidikan, a.cluster,
-                       AVG(p.keaktifan) as avg_keaktifan,
-                       AVG(p.kepemimpinan) as avg_kepemimpinan,
-                       AVG(p.pengalaman) as avg_pengalaman,
-                       AVG(p.disiplin) as avg_disiplin,
-                       AVG(p.komunikasi) as avg_komunikasi
+                   a.pendidikan, a.cluster,
+                   COALESCE(AVG(v.keaktifan), 0) as avg_keaktifan,
+                   COALESCE(AVG(v.kepemimpinan), 0) as avg_kepemimpinan,
+                   COALESCE(AVG(v.pengalaman), 0) as avg_pengalaman,
+                   COALESCE(AVG(v.disiplin), 0) as avg_disiplin,
+                   COALESCE(AVG(v.komunikasi), 0) as avg_komunikasi,
+                   (COALESCE(AVG(v.keaktifan), 0) + COALESCE(AVG(v.kepemimpinan), 0) + COALESCE(AVG(v.pengalaman), 0) + COALESCE(AVG(v.disiplin), 0) + COALESCE(AVG(v.komunikasi), 0)) / 5 as final_score
                 FROM anggota a
                 LEFT JOIN voting v ON a.id = v.kandidat_id
-                LEFT JOIN penilaian p ON a.id = p.anggota_id
                 WHERE a.status = 'kandidat'
                 GROUP BY a.id, a.nama, a.pendidikan, a.cluster
-                ORDER BY vote_count DESC, a.nama
+                ORDER BY final_score DESC, vote_count DESC
             """, fetch=True)
             
             total_votes_result = execute_query("SELECT COUNT(*) FROM voting", fetch='one')
@@ -1040,15 +1012,15 @@ def hasil():
         # Get all members with their cluster assignments and average ratings
         members = execute_query("""
             SELECT a.nama, a.pendidikan, a.cluster,
-                   AVG(p.keaktifan) as avg_keaktifan,
-                   AVG(p.kepemimpinan) as avg_kepemimpinan,
-                   AVG(p.pengalaman) as avg_pengalaman,
-                   AVG(p.disiplin) as avg_disiplin,
-                   AVG(p.komunikasi) as avg_komunikasi,
-                   COUNT(p.id) as rating_count
+                   AVG(v.keaktifan) as avg_keaktifan,
+                   AVG(v.kepemimpinan) as avg_kepemimpinan,
+                   AVG(v.pengalaman) as avg_pengalaman,
+                   AVG(v.disiplin) as avg_disiplin,
+                   AVG(v.komunikasi) as avg_komunikasi,
+                   COUNT(v.id) as rating_count
             FROM anggota a
-            LEFT JOIN penilaian p ON a.id = p.anggota_id
-            WHERE a.cluster IS NOT NULL
+            LEFT JOIN voting v ON a.id = v.kandidat_id
+            WHERE a.cluster IS NOT NULL AND a.status = 'kandidat'
             GROUP BY a.id, a.nama, a.pendidikan, a.cluster
             ORDER BY a.cluster, a.nama
         """, fetch=True)

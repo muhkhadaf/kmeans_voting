@@ -2,13 +2,14 @@ import pymysql
 pymysql.install_as_MySQLdb()
 import MySQLdb
 from flask import g
+from werkzeug.security import generate_password_hash
 import os
 
 # Database configuration
 DB_CONFIG = {
     'host': 'localhost',
     'user': 'root',
-    'password': '',  # Sesuaikan dengan password MySQL Anda
+    'password': '',  
     'database': 'votings'
 }
 
@@ -113,39 +114,51 @@ def init_db():
                 end_time DATETIME NOT NULL,
                 status ENUM('scheduled','active','ended') DEFAULT 'scheduled',
                 created_at TIMESTAMP DEFAULT CURRENT_TIMESTAMP,
-                created_by VARCHAR(100) NOT NULL,
-                manually_stopped TINYINT DEFAULT 0,
-                stopped_at DATETIME,
-                extended_count INT DEFAULT 0
+                created_by VARCHAR(100) NOT NULL
             )
         """)
-        
-        # Create voting table with period reference
+
+        # Create voting table
         cursor.execute("""
             CREATE TABLE IF NOT EXISTS voting (
                 id INT AUTO_INCREMENT PRIMARY KEY,
                 user_id INT NOT NULL,
                 kandidat_id INT NOT NULL,
-                voting_period_id INT,
+                voting_period_id INT NOT NULL,
+                keaktifan INT DEFAULT 0,
+                kepemimpinan INT DEFAULT 0,
+                pengalaman INT DEFAULT 0,
+                disiplin INT DEFAULT 0,
+                komunikasi INT DEFAULT 0,
                 created_at TIMESTAMP DEFAULT CURRENT_TIMESTAMP,
                 FOREIGN KEY (user_id) REFERENCES user(id) ON DELETE CASCADE,
                 FOREIGN KEY (kandidat_id) REFERENCES anggota(id) ON DELETE CASCADE,
                 FOREIGN KEY (voting_period_id) REFERENCES voting_periods(id) ON DELETE CASCADE,
-                UNIQUE KEY unique_vote (user_id, kandidat_id)
+                UNIQUE KEY unique_vote (user_id, kandidat_id, voting_period_id)
             )
         """)
-        
-        # Add voting_period_id column if it doesn't exist (for existing databases)
+
+        # Add rating columns to voting table if they don't exist (migration)
         try:
-            cursor.execute("ALTER TABLE voting ADD COLUMN voting_period_id INT")
-            cursor.execute("ALTER TABLE voting ADD FOREIGN KEY (voting_period_id) REFERENCES voting_periods(id) ON DELETE CASCADE")
-        except MySQLdb.Error:
-            pass  # Column already exists
-        
-        # Insert default admin if not exists
-        cursor.execute("SELECT COUNT(*) FROM admin WHERE username = 'admin'")
-        if cursor.fetchone()[0] == 0:
-            from werkzeug.security import generate_password_hash
+            cursor.execute("SELECT keaktifan FROM voting LIMIT 1")
+        except:
+            print("Adding rating columns to voting table...")
+            alter_queries = [
+                "ALTER TABLE voting ADD COLUMN keaktifan INT DEFAULT 0",
+                "ALTER TABLE voting ADD COLUMN kepemimpinan INT DEFAULT 0",
+                "ALTER TABLE voting ADD COLUMN pengalaman INT DEFAULT 0",
+                "ALTER TABLE voting ADD COLUMN disiplin INT DEFAULT 0",
+                "ALTER TABLE voting ADD COLUMN komunikasi INT DEFAULT 0"
+            ]
+            for query in alter_queries:
+                try:
+                    cursor.execute(query)
+                except Exception as e:
+                    print(f"Error executing migration: {e}")
+
+        # Check if admin exists
+        cursor.execute("SELECT * FROM admin WHERE username = 'admin'")
+        if not cursor.fetchone():
             hashed_password = generate_password_hash('admin123')
             cursor.execute(
                 "INSERT INTO admin (username, password) VALUES (%s, %s)",
