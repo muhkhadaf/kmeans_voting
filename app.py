@@ -220,6 +220,35 @@ def anggota():
 def add_anggota():
     if 'admin_logged_in' not in session:
         return redirect(url_for('login'))
+    
+    nama = request.form['nama']
+    pendidikan = request.form['pendidikan']
+    visi_misi = request.form['visi_misi']
+    
+    execute_query(
+        "INSERT INTO anggota (nama, pendidikan, visi_misi) VALUES (%s, %s, %s)",
+        (nama, pendidikan, visi_misi)
+    )
+    
+    flash('Anggota berhasil ditambahkan!', 'success')
+    return redirect(url_for('anggota'))
+@app.route('/anggota/edit/<int:id>', methods=['POST'])
+def edit_anggota(id):
+    if 'admin_logged_in' not in session:
+        return redirect(url_for('login'))
+    
+    nama = request.form['nama']
+    pendidikan = request.form['pendidikan']
+    visi_misi = request.form['visi_misi']
+    
+    execute_query(
+        "UPDATE anggota SET nama = %s, pendidikan = %s, visi_misi = %s WHERE id = %s",
+        (nama, pendidikan, visi_misi, id)
+    )
+    
+    flash('Data anggota berhasil diupdate!', 'success')
+    return redirect(url_for('anggota'))
+
 @app.route('/anggota/delete/<int:id>', methods=['GET'])
 def delete_anggota(id):
     if 'admin_logged_in' not in session:
@@ -898,6 +927,11 @@ def user_change_password():
             "UPDATE user SET password = %s WHERE id = %s",
             (hashed_password, session['user_id'])
         )
+        
+        flash('Password berhasil diubah!', 'success')
+        return redirect(url_for('user_vote'))
+    
+    return render_template('user_change_password.html')
         
 
 @app.route('/user_logout')
