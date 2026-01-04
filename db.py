@@ -10,7 +10,7 @@ DB_CONFIG = {
     'host': 'localhost',
     'user': 'root',
     'password': '',  
-    'database': 'votings'
+    'database': 'votink'
 }
 
 def get_db():
@@ -114,7 +114,10 @@ def init_db():
                 end_time DATETIME NOT NULL,
                 status ENUM('scheduled','active','ended') DEFAULT 'scheduled',
                 created_at TIMESTAMP DEFAULT CURRENT_TIMESTAMP,
-                created_by VARCHAR(100) NOT NULL
+                created_by VARCHAR(100) NOT NULL,
+                manually_stopped TINYINT DEFAULT 0,
+                stopped_at DATETIME DEFAULT NULL,
+                extended_count INT DEFAULT 0
             )
         """)
 
